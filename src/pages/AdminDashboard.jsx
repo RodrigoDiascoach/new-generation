@@ -23,6 +23,7 @@ export default function AdminDashboard() {
   const [h4Data, setH4Data] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
+  const [exportOpen, setExportOpen] = useState(false)
 
   if (!isAdminAuth()) return <Navigate to="/admin" replace />
 
@@ -85,8 +86,8 @@ export default function AdminDashboard() {
     ? (h4Data.reduce((s, h) => s + (h.rating_workshop || 0), 0) / h4Data.length).toFixed(1)
     : 0
 
-  // Export JSON
-  function exportData() {
+  // Export JSON (raw backup)
+  function exportJSON() {
     const exportObj = {
       generated_at: new Date().toISOString(),
       workshop: 'New Generation AGEBROKERS',
@@ -97,11 +98,116 @@ export default function AdminDashboard() {
       h3_pitch: h3Data,
       h4_acao: h4Data,
     }
-    const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' })
+    download(
+      JSON.stringify(exportObj, null, 2),
+      `agebrokers-${new Date().toISOString().slice(0,10)}.json`,
+      'application/json',
+    )
+  }
+
+  // Export CSV (1 linha por participante, para Excel/Sheets)
+  function exportCSV() {
+    const headers = [
+      'nome', 'email', 'telefone', 'entidade', 'mediador_responsavel',
+      'relacao', 'caminho', 'equipa', 'criado_em',
+      'progresso (0-4)',
+      'competencias_escolhidas', 'top_3_competencias',
+      'olhar_geracional', 'experiencia_cliente', 'sucessao_emocional',
+      'num_ideias', 'categorias_ideias',
+      'valencias', 'o_que_gosto', 'o_que_nao_gosto', 'solucoes_propostas',
+      'execucao_imediata', 'desenvolvimento_6m', 'compromisso_pessoal',
+      'prazo_pronto',
+      'nao_disse_partilhar', 'nao_disse',
+      'respostas_caminho',
+      'feedback_workshop', 'rating_workshop',
+    ]
+
+    const rows = participants.map(p => {
+      const h1 = h1Data.find(h => h.participant_id === p.id) || {}
+      const h3 = h3Data.find(h => h.participant_id === p.id) || {}
+      const h4 = h4Data.find(h => h.participant_id === p.id) || {}
+      const ideias = h2Data.filter(i => i.participant_id === p.id)
+      const comps = Array.isArray(h1.competencias) ? h1.competencias : []
+      const top3 = [...comps].sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 3)
+      const respCam = Array.isArray(h4.respostas_caminho) ? h4.respostas_caminho : []
+      const progresso = ['h1_completo', 'h2_completo', 'h3_completo', 'h4_completo'].filter(k => p[k]).length
+
+      return [
+        p.nome_completo || '',
+        p.email || '',
+        p.telefone || '',
+        p.entidade_nome || '',
+        p.mediador_responsavel || '',
+        p.relacao_parentesco || '',
+        p.caminho || '',
+        p.equipa_numero || '',
+        p.created_at || '',
+        progresso,
+        comps.map(c => `${c.label}:${c.score}${c.custom ? '*' : ''}`).join(' | '),
+        top3.map(c => `${c.label} (${c.score})`).join(' | '),
+        h1.olhar_geracional || '',
+        h1.experiencia_cliente || '',
+        h1.sucessao_emocional || '',
+        ideias.length,
+        ideias.map(i => i.categoria).filter(Boolean).join(' | '),
+        h3.valencias || '',
+        h3.o_que_gosto || '',
+        h3.o_que_nao_gosto || '',
+        h3.solucoes_propostas || '',
+        h4.execucao_imediata || '',
+        h4.desenvolvimento_6m || '',
+        h4.compromisso_lideranca || '',
+        h4.prazo_pronto || '',
+        h4.nao_disse_partilhar ? 'sim' : 'não',
+        h4.nao_disse || '',
+        respCam.map(r => `${r.label}: ${r.answer}`).join('\n---\n'),
+        h4.feedback_workshop || '',
+        h4.rating_workshop ?? '',
+      ]
+    })
+
+    const csv = '﻿' + // BOM para Excel reconhecer UTF-8
+      [headers, ...rows]
+        .map(row => row.map(cell => csvEscape(cell)).join(','))
+        .join('\r\n')
+
+    download(csv, `agebrokers-${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8')
+  }
+
+  // Export CSV (1 linha por ideia H2)
+  function exportCSVIdeias() {
+    const headers = ['equipa', 'autor', 'caminho', 'categoria', 'titulo', 'descricao', 'criado_em']
+    const rows = h2Data.map(i => {
+      const p = participants.find(pp => pp.id === i.participant_id)
+      return [
+        i.equipa_numero || '',
+        p?.nome_completo || '',
+        p?.caminho || '',
+        i.categoria || '',
+        i.ideia_titulo || '',
+        i.ideia_descricao || '',
+        i.created_at || '',
+      ]
+    })
+    const csv = '﻿' +
+      [headers, ...rows]
+        .map(row => row.map(cell => csvEscape(cell)).join(','))
+        .join('\r\n')
+    download(csv, `agebrokers-ideias-${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8')
+  }
+
+  function csvEscape(value) {
+    const s = String(value ?? '')
+    if (/[",\r\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`
+    return s
+  }
+
+  function download(content, filename, mime) {
+    const blob = new Blob([content], { type: mime })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `agebrokers-debriefing-${new Date().toISOString().slice(0,10)}.json`
+    a.download = filename
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -128,10 +234,47 @@ export default function AdminDashboard() {
             <button onClick={loadAll} className="btn-secondary py-2 px-3 text-sm">
               <RefreshCw size={16} />
             </button>
-            <button onClick={exportData} className="btn-orange py-2 px-3 text-sm flex items-center gap-2">
-              <Download size={16} />
-              <span className="hidden sm:inline">Export</span>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setExportOpen(o => !o)}
+                onBlur={() => setTimeout(() => setExportOpen(false), 150)}
+                className="btn-orange py-2 px-3 text-sm flex items-center gap-2"
+              >
+                <Download size={16} />
+                <span className="hidden sm:inline">Export</span>
+              </button>
+              {exportOpen && (
+                <div className="absolute right-0 mt-1 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                  <button
+                    onMouseDown={(e) => { e.preventDefault(); exportCSV(); setExportOpen(false) }}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100"
+                  >
+                    <div className="font-semibold text-navy text-sm flex items-center gap-2">
+                      📊 CSV — todos os participantes
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">Excel/Sheets · 1 linha por pessoa</div>
+                  </button>
+                  <button
+                    onMouseDown={(e) => { e.preventDefault(); exportCSVIdeias(); setExportOpen(false) }}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100"
+                  >
+                    <div className="font-semibold text-navy text-sm flex items-center gap-2">
+                      💡 CSV — ideias H2
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">1 linha por ideia, com autor e equipa</div>
+                  </button>
+                  <button
+                    onMouseDown={(e) => { e.preventDefault(); exportJSON(); setExportOpen(false) }}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-50"
+                  >
+                    <div className="font-semibold text-navy text-sm flex items-center gap-2">
+                      📦 JSON — backup técnico
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">Tudo cru, para arquivo</div>
+                  </button>
+                </div>
+              )}
+            </div>
             <button onClick={logout} className="text-gray-500 hover:text-red-600 p-2">
               <LogOut size={18} />
             </button>
