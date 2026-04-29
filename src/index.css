@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #FAFBFC;
+    color: #050A26;
+  }
+  h1, h2, h3, h4, h5 {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-alfa-blue hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply bg-white hover:bg-gray-50 text-navy border-2 border-gray-200 hover:border-alfa-blue font-semibold py-3 px-6 rounded-lg transition-all duration-200;
+  }
+  .btn-orange {
+    @apply bg-alfa-orange hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md;
+  }
+  .input-field {
+    @apply w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-alfa-blue focus:outline-none transition-colors duration-200 bg-white;
+  }
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6;
+  }
+  .accent-bar {
+    @apply h-1 w-12 bg-alfa-orange rounded-full mb-4;
+  }
+}
+
+/* Branding bar (igual ao PDF) */
+.brand-bar {
+  background: linear-gradient(to right, #1C3BD7 0%, #1C3BD7 70%, #F39237 70%, #F39237 100%);
+  height: 6px;
+}
+
+/* Loading spinner */
+.spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #1C3BD7;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
