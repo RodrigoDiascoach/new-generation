@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Save, CheckCircle2, TrendingUp, Briefcase, MessageSquare, Compass } from 'lucide-react'
+import { Loader2, Save, CheckCircle2, TrendingUp, Briefcase, MessageSquare, Compass, Clock, Lock } from 'lucide-react'
 import Layout from '../components/Layout'
 import ModuleHeader from '../components/ModuleHeader'
 import { supabase } from '../lib/supabase'
@@ -40,6 +40,9 @@ export default function H4Acao() {
     execucao_imediata: '',
     desenvolvimento_6m: '',
     compromisso_lideranca: '',
+    prazo_pronto: '',
+    nao_disse: '',
+    nao_disse_partilhar: false,
     feedback_workshop: '',
     rating_workshop: 8,
   })
@@ -68,6 +71,9 @@ export default function H4Acao() {
         execucao_imediata: existing.execucao_imediata || '',
         desenvolvimento_6m: existing.desenvolvimento_6m || '',
         compromisso_lideranca: existing.compromisso_lideranca || '',
+        prazo_pronto: existing.prazo_pronto || '',
+        nao_disse: existing.nao_disse || '',
+        nao_disse_partilhar: !!existing.nao_disse_partilhar,
         feedback_workshop: existing.feedback_workshop || '',
         rating_workshop: existing.rating_workshop || 8,
       })
@@ -203,6 +209,72 @@ export default function H4Acao() {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="card border-l-4 border-l-alfa-blue">
+            <div className="flex items-center gap-2 mb-1">
+              <Clock className="text-alfa-blue" size={20} />
+              <h3 className="font-display text-xl text-navy">Quando estás pronto?</h3>
+            </div>
+            <p className="text-sm text-gray-500 mb-3">
+              Em que prazo te sentes pronto/a para o teu próximo passo?
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {[
+                { value: '3m', label: '3 meses' },
+                { value: '6m', label: '6 meses' },
+                { value: '12m', label: '12 meses' },
+                { value: '24m', label: '24 meses' },
+                { value: '+24m', label: 'Mais de 2 anos' },
+                { value: 'nao_sei', label: 'Ainda não sei' },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => update('prazo_pronto', opt.value)}
+                  className={`py-3 rounded-lg border-2 text-sm font-semibold transition-all ${
+                    data.prazo_pronto === opt.value
+                      ? 'border-alfa-blue bg-alfa-blue text-white'
+                      : 'border-gray-200 text-navy hover:border-alfa-blue/50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="card border-l-4 border-l-alfa-orange bg-gradient-to-br from-orange-50/40 to-white">
+            <div className="flex items-center gap-2 mb-1">
+              <Lock className="text-alfa-orange" size={20} />
+              <h3 className="font-display text-xl text-navy">O que ainda não disseste</h3>
+            </div>
+            <p className="text-sm text-gray-500 mb-3">
+              Há algo que ainda não disseste aos teus pais sobre como te sentes em relação ao negócio? Aqui é o sítio. Tu decides se queres que apareça ou não no briefing pessoal aos teus pais.
+            </p>
+            <textarea
+              value={data.nao_disse}
+              onChange={(e) => update('nao_disse', e.target.value)}
+              rows={4}
+              className="input-field resize-none text-sm"
+              placeholder="Sem julgamento. Pode ser uma dúvida, um receio, uma reserva, uma vontade que não tinha forma de partilhar..."
+            />
+            <label className="mt-3 flex items-start gap-3 p-3 bg-white border-2 border-gray-200 rounded-lg cursor-pointer hover:border-alfa-orange/50 transition-colors">
+              <input
+                type="checkbox"
+                checked={data.nao_disse_partilhar}
+                onChange={(e) => update('nao_disse_partilhar', e.target.checked)}
+                className="mt-1 accent-alfa-orange"
+              />
+              <div>
+                <div className="font-semibold text-navy text-sm">
+                  Posso partilhar isto no briefing aos meus pais
+                </div>
+                <div className="text-xs text-gray-500 mt-0.5">
+                  Se não marcares, fica privado — só o Rodrigo vê. Default: privado.
+                </div>
+              </div>
+            </label>
           </div>
 
           <div className="card bg-gray-50">

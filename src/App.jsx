@@ -9,6 +9,7 @@ import H4Acao from './pages/H4Acao'
 import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
 import Apresentacao from './pages/Apresentacao'
+import Briefing from './pages/Briefing'
 
 function ProtectedRoute({ children }) {
   const { participantId, loading } = useParticipant()
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/apresentacao" element={<Apresentacao />} />
+        <Route path="/admin/briefing/:participantId" element={<Briefing />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

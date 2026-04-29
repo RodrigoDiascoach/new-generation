@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import {
   Users, Lightbulb, CheckCircle2, Star, Download, LogOut,
-  RefreshCw, Award, Heart, Ban, TrendingUp, Play
+  RefreshCw, Award, Heart, Ban, TrendingUp, Play, FileText
 } from 'lucide-react'
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import Logo from '../components/Logo'
@@ -270,6 +270,7 @@ export default function AdminDashboard() {
                         <th className="text-left p-3">Caminho</th>
                         <th className="text-center p-3">Equipa</th>
                         <th className="text-center p-3">Progresso</th>
+                        <th className="text-center p-3">Briefing</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -301,11 +302,21 @@ export default function AdminDashboard() {
                                 ))}
                               </div>
                             </td>
+                            <td className="p-3 text-center">
+                              <a
+                                href={`/admin/briefing/${p.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-xs font-semibold text-alfa-blue hover:text-blue-700 px-2 py-1 rounded border border-alfa-blue/30 hover:bg-alfa-blue/5"
+                              >
+                                <FileText size={12} /> Abrir
+                              </a>
+                            </td>
                           </tr>
                         )
                       })}
                       {participants.length === 0 && (
-                        <tr><td colSpan="6" className="p-8 text-center text-gray-400">Sem participantes ainda.</td></tr>
+                        <tr><td colSpan="7" className="p-8 text-center text-gray-400">Sem participantes ainda.</td></tr>
                       )}
                     </tbody>
                   </table>
