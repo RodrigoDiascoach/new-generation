@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Save } from 'lucide-react'
+import { Loader2, Save, Plus, X, ArrowLeft, ArrowRight } from 'lucide-react'
 import Layout from '../components/Layout'
 import ModuleHeader from '../components/ModuleHeader'
 import { supabase } from '../lib/supabase'
 import { useParticipant } from '../lib/ParticipantContext'
 
-const COMPETENCIAS = [
+const TOTAL_REQUIRED = 8
+
+const SUGGESTIONS = [
   { key: 'vendas', label: 'Vendas', desc: 'Capacidade de vender e fechar negócios' },
   { key: 'marketing_digital', label: 'Marketing Digital', desc: 'Redes sociais, conteúdo, anúncios' },
   { key: 'tecnologia_ia', label: 'Tecnologia & IA', desc: 'Ferramentas digitais, automação, IA' },
@@ -15,17 +17,36 @@ const COMPETENCIAS = [
   { key: 'lideranca', label: 'Liderança', desc: 'Gerir equipas e tomar decisões' },
   { key: 'analise_dados', label: 'Análise de Dados', desc: 'Excel, relatórios, KPIs' },
   { key: 'conhecimento_seguros', label: 'Conhecimento de Seguros', desc: 'Produtos, regulação, mercado' },
+  { key: 'negociacao', label: 'Negociação', desc: 'Fechar deals e lidar com objeções' },
+  { key: 'networking', label: 'Networking', desc: 'Construir e manter relações profissionais' },
+  { key: 'empreendedorismo', label: 'Empreendedorismo', desc: 'Pensar como dono, criar valor novo' },
+  { key: 'resiliencia', label: 'Resiliência', desc: 'Lidar com pressão e adversidade' },
+  { key: 'resolucao_problemas', label: 'Resolução de Problemas', desc: 'Pensamento crítico e analítico' },
+  { key: 'gestao_financeira', label: 'Gestão Financeira', desc: 'Cashflow, margens, investimento' },
+  { key: 'inovacao', label: 'Inovação', desc: 'Criar produtos e serviços novos' },
+  { key: 'storytelling', label: 'Storytelling', desc: 'Contar histórias que vendem' },
+  { key: 'gestao_tempo', label: 'Gestão do Tempo', desc: 'Produtividade, foco, prioridades' },
+  { key: 'adaptabilidade', label: 'Adaptabilidade', desc: 'Mudar de abordagem rapidamente' },
+  { key: 'visao_estrategica', label: 'Visão Estratégica', desc: 'Pensar a longo prazo' },
+  { key: 'trabalho_equipa', label: 'Trabalho em Equipa', desc: 'Colaborar e contribuir' },
 ]
 
 export default function H1Identidade() {
   const { participantId, refresh } = useParticipant()
   const navigate = useNavigate()
+  const [phase, setPhase] = useState('select')
+  const [selected, setSelected] = useState([])
   const [scores, setScores] = useState({})
-  const [processosMelhoria, setProcessosMelhoria] = useState('')
-  const [oportunidadesInovacao, setOportunidadesInovacao] = useState('')
+  const [customLabel, setCustomLabel] = useState('')
+  const [customDesc, setCustomDesc] = useState('')
+  const [showCustomForm, setShowCustomForm] = useState(false)
+  const [olharGeracional, setOlharGeracional] = useState('')
+  const [experienciaCliente, setExperienciaCliente] = useState('')
+  const [sucessaoEmocional, setSucessaoEmocional] = useState('')
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [recordId, setRecordId] = useState(null)
+  const [bootLoading, setBootLoading] = useState(true)
 
   useEffect(() => {
     if (!participantId) return
@@ -41,18 +62,51 @@ export default function H1Identidade() {
 
     if (data) {
       setRecordId(data.id)
+      const comps = Array.isArray(data.competencias) ? data.competencias : []
+      setSelected(comps.map(({ key, label, desc, custom }) => ({ key, label, desc, custom: !!custom })))
       const initialScores = {}
-      COMPETENCIAS.forEach(c => {
-        initialScores[c.key] = data[c.key] || 5
-      })
+      comps.forEach(c => { initialScores[c.key] = c.score ?? 5 })
       setScores(initialScores)
-      setProcessosMelhoria(data.processos_melhoria || '')
-      setOportunidadesInovacao(data.oportunidades_inovacao || '')
-    } else {
-      const initialScores = {}
-      COMPETENCIAS.forEach(c => { initialScores[c.key] = 5 })
-      setScores(initialScores)
+      setOlharGeracional(data.olhar_geracional || '')
+      setExperienciaCliente(data.experiencia_cliente || '')
+      setSucessaoEmocional(data.sucessao_emocional || '')
+      if (comps.length === TOTAL_REQUIRED) setPhase('rate')
     }
+    setBootLoading(false)
+  }
+
+  function isSelected(key) {
+    return selected.some(s => s.key === key)
+  }
+
+  function toggleSuggestion(suggestion) {
+    if (isSelected(suggestion.key)) {
+      setSelected(selected.filter(s => s.key !== suggestion.key))
+      const ns = { ...scores }
+      delete ns[suggestion.key]
+      setScores(ns)
+    } else if (selected.length < TOTAL_REQUIRED) {
+      setSelected([...selected, { ...suggestion, custom: false }])
+      setScores({ ...scores, [suggestion.key]: 5 })
+    }
+  }
+
+  function addCustom() {
+    const label = customLabel.trim()
+    if (!label || selected.length >= TOTAL_REQUIRED) return
+    const key = `custom_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+    setSelected([...selected, { key, label, desc: customDesc.trim(), custom: true }])
+    setScores({ ...scores, [key]: 5 })
+    setCustomLabel('')
+    setCustomDesc('')
+    setShowCustomForm(false)
+  }
+
+  function removeSelected(key) {
+    setSelected(selected.filter(s => s.key !== key))
+    const ns = { ...scores }
+    delete ns[key]
+    setScores(ns)
   }
 
   function updateScore(key, value) {
@@ -62,11 +116,19 @@ export default function H1Identidade() {
 
   async function handleSave() {
     setLoading(true)
+    const competencias = selected.map(s => ({
+      key: s.key,
+      label: s.label,
+      desc: s.desc || '',
+      custom: !!s.custom,
+      score: scores[s.key] ?? 5,
+    }))
     const payload = {
       participant_id: participantId,
-      ...scores,
-      processos_melhoria: processosMelhoria,
-      oportunidades_inovacao: oportunidadesInovacao,
+      competencias,
+      olhar_geracional: olharGeracional,
+      experiencia_cliente: experienciaCliente,
+      sucessao_emocional: sucessaoEmocional,
     }
 
     let result
@@ -89,95 +151,257 @@ export default function H1Identidade() {
     setLoading(false)
   }
 
+  if (bootLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="animate-spin text-alfa-blue" size={32} />
+        </div>
+      </Layout>
+    )
+  }
+
+  const customs = selected.filter(s => s.custom)
+
   return (
     <Layout>
       <div className="animate-fade-in max-w-4xl">
         <ModuleHeader
           label="H1 · Identidade & Potencial"
           title="Roda das Competências"
-          description="Avalia-te de 1 a 10 em cada competência. Sê honesto — esta é a tua base de partida."
+          description={
+            phase === 'select'
+              ? `Escolhe ${TOTAL_REQUIRED} competências para te avaliares. Podes usar as sugestões ou adicionar as tuas.`
+              : 'Avalia-te de 1 a 10 em cada competência. Sê honesto — esta é a tua base de partida.'
+          }
           color="blue"
         />
 
-        <div className="card mb-6">
-          <h2 className="font-display text-xl text-navy mb-1">As tuas competências hoje</h2>
-          <div className="accent-bar mb-6" />
+        {phase === 'select' && (
+          <>
+            <div className="card mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-display text-xl text-navy">Sugestões</h2>
+                <span className="font-display text-lg text-alfa-blue tabular-nums">
+                  {selected.length}/{TOTAL_REQUIRED}
+                </span>
+              </div>
+              <div className="accent-bar mb-6" />
+              <div className="grid sm:grid-cols-2 gap-3">
+                {SUGGESTIONS.map(s => {
+                  const active = isSelected(s.key)
+                  const disabled = !active && selected.length >= TOTAL_REQUIRED
+                  return (
+                    <button
+                      key={s.key}
+                      type="button"
+                      onClick={() => toggleSuggestion(s)}
+                      disabled={disabled}
+                      className={`text-left p-3 rounded-lg border-2 transition-all ${
+                        active
+                          ? 'border-alfa-blue bg-alfa-blue/5'
+                          : disabled
+                          ? 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'
+                          : 'border-gray-200 hover:border-alfa-blue/50'
+                      }`}
+                    >
+                      <div className="font-semibold text-navy text-sm">{s.label}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">{s.desc}</div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
 
-          <div className="space-y-5">
-            {COMPETENCIAS.map((comp) => (
-              <div key={comp.key}>
-                <div className="flex justify-between items-baseline mb-2">
-                  <div>
-                    <label className="font-semibold text-navy">{comp.label}</label>
-                    <p className="text-xs text-gray-500">{comp.desc}</p>
-                  </div>
-                  <span className="font-display text-2xl text-alfa-blue tabular-nums">
-                    {scores[comp.key] || 5}
-                  </span>
+            <div className="card mb-6">
+              <h2 className="font-display text-xl text-navy mb-1">Competência personalizada</h2>
+              <div className="accent-bar mb-4" />
+
+              {customs.length > 0 && (
+                <div className="space-y-2 mb-4">
+                  {customs.map(s => (
+                    <div key={s.key} className="flex items-start justify-between p-3 bg-alfa-blue/5 border border-alfa-blue/30 rounded-lg">
+                      <div>
+                        <div className="font-semibold text-navy text-sm">{s.label}</div>
+                        {s.desc && <div className="text-xs text-gray-500 mt-0.5">{s.desc}</div>}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeSelected(s.key)}
+                        className="text-gray-400 hover:text-red-600 p-1"
+                        title="Remover"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  value={scores[comp.key] || 5}
-                  onChange={(e) => updateScore(comp.key, e.target.value)}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-alfa-blue"
-                />
-                <div className="flex justify-between text-xs text-gray-400 mt-1">
-                  <span>1 · Iniciante</span>
-                  <span>10 · Especialista</span>
+              )}
+
+              {showCustomForm ? (
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    value={customLabel}
+                    onChange={e => setCustomLabel(e.target.value)}
+                    placeholder="Nome da competência"
+                    className="input-field"
+                    maxLength={60}
+                  />
+                  <input
+                    type="text"
+                    value={customDesc}
+                    onChange={e => setCustomDesc(e.target.value)}
+                    placeholder="Descrição curta (opcional)"
+                    className="input-field"
+                    maxLength={120}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={addCustom}
+                      disabled={!customLabel.trim() || selected.length >= TOTAL_REQUIRED}
+                      className="btn-primary py-2 px-4 text-sm"
+                    >
+                      Adicionar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowCustomForm(false); setCustomLabel(''); setCustomDesc('') }}
+                      className="btn-secondary py-2 px-4 text-sm"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowCustomForm(true)}
+                  disabled={selected.length >= TOTAL_REQUIRED}
+                  className="w-full p-3 rounded-lg border-2 border-dashed border-gray-300 text-gray-600 hover:border-alfa-blue hover:text-alfa-blue transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Plus size={18} /> Adicionar competência minha
+                </button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setPhase('rate')}
+              disabled={selected.length !== TOTAL_REQUIRED}
+              className="btn-primary w-full flex items-center justify-center gap-2"
+            >
+              Continuar para avaliação <ArrowRight size={20} />
+            </button>
+          </>
+        )}
+
+        {phase === 'rate' && (
+          <>
+            <div className="card mb-6">
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="font-display text-xl text-navy">As tuas competências hoje</h2>
+                <button
+                  type="button"
+                  onClick={() => setPhase('select')}
+                  className="text-sm text-alfa-blue hover:underline flex items-center gap-1"
+                >
+                  <ArrowLeft size={14} /> Alterar
+                </button>
+              </div>
+              <div className="accent-bar mb-6" />
+
+              <div className="space-y-5">
+                {selected.map(comp => (
+                  <div key={comp.key}>
+                    <div className="flex justify-between items-baseline mb-2">
+                      <div>
+                        <label className="font-semibold text-navy">{comp.label}</label>
+                        {comp.desc && <p className="text-xs text-gray-500">{comp.desc}</p>}
+                      </div>
+                      <span className="font-display text-2xl text-alfa-blue tabular-nums">
+                        {scores[comp.key] ?? 5}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={scores[comp.key] ?? 5}
+                      onChange={(e) => updateScore(comp.key, e.target.value)}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-alfa-blue"
+                    />
+                    <div className="flex justify-between text-xs text-gray-400 mt-1">
+                      <span>1 · Iniciante</span>
+                      <span>10 · Especialista</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="card mb-6">
+              <h2 className="font-display text-xl text-navy mb-1">A tua perspetiva sobre o negócio</h2>
+              <div className="accent-bar mb-6" />
+
+              <div className="space-y-5">
+                <div>
+                  <label className="block font-semibold text-navy mb-2">
+                    Quando olhas para o negócio da tua família com olhos da tua geração, o que sentes que ele faz bem — e onde sentes que está a ficar para trás?
+                  </label>
+                  <textarea
+                    value={olharGeracional}
+                    onChange={(e) => { setOlharGeracional(e.target.value); setSaved(false) }}
+                    rows={4}
+                    className="input-field resize-none"
+                    placeholder="Sê honesto: pode ser tecnologia, comunicação, atendimento, marca, qualquer coisa..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-navy mb-2">
+                    Imagina o teu primeiro cliente daqui a 3 anos. Como é a experiência que ele tem contigo, do primeiro contacto à entrega da apólice?
+                  </label>
+                  <textarea
+                    value={experienciaCliente}
+                    onChange={(e) => { setExperienciaCliente(e.target.value); setSaved(false) }}
+                    rows={4}
+                    className="input-field resize-none"
+                    placeholder="Conta a história em 4 ou 5 frases. O que ele sente em cada passo?"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-navy mb-2">
+                    O que te entusiasma e o que te assusta na ideia de continuar este negócio?
+                  </label>
+                  <textarea
+                    value={sucessaoEmocional}
+                    onChange={(e) => { setSucessaoEmocional(e.target.value); setSaved(false) }}
+                    rows={4}
+                    className="input-field resize-none"
+                    placeholder="Não há resposta certa. As duas coisas costumam coexistir."
+                  />
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="card mb-6">
-          <h2 className="font-display text-xl text-navy mb-1">Diagnóstico do negócio atual</h2>
-          <div className="accent-bar mb-6" />
-
-          <div className="space-y-5">
-            <div>
-              <label className="block font-semibold text-navy mb-2">
-                Que processos do negócio dos teus pais sentes que podem melhorar?
-              </label>
-              <textarea
-                value={processosMelhoria}
-                onChange={(e) => { setProcessosMelhoria(e.target.value); setSaved(false) }}
-                rows={4}
-                className="input-field resize-none"
-                placeholder="Ex: o atendimento por WhatsApp não está organizado, não há automação no follow-up..."
-              />
             </div>
 
-            <div>
-              <label className="block font-semibold text-navy mb-2">
-                Que oportunidades de inovação consegues identificar?
-              </label>
-              <textarea
-                value={oportunidadesInovacao}
-                onChange={(e) => { setOportunidadesInovacao(e.target.value); setSaved(false) }}
-                rows={4}
-                className="input-field resize-none"
-                placeholder="Ex: criar Instagram para a mediadora, implementar IA para análise de apólices..."
-              />
-            </div>
-          </div>
-        </div>
-
-        <button
-          onClick={handleSave}
-          disabled={loading}
-          className="btn-primary w-full flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <><Loader2 className="animate-spin" size={20} /> A guardar...</>
-          ) : saved ? (
-            <>✓ Guardado!</>
-          ) : (
-            <><Save size={20} /> Guardar e voltar à jornada</>
-          )}
-        </button>
+            <button
+              onClick={handleSave}
+              disabled={loading}
+              className="btn-primary w-full flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <><Loader2 className="animate-spin" size={20} /> A guardar...</>
+              ) : saved ? (
+                <>✓ Guardado!</>
+              ) : (
+                <><Save size={20} /> Guardar e voltar à jornada</>
+              )}
+            </button>
+          </>
+        )}
       </div>
     </Layout>
   )

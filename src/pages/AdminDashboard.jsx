@@ -11,15 +11,27 @@ import { isAdminAuth } from './AdminLogin'
 
 const STORAGE_KEY = 'agebrokers_admin_auth'
 
-const COMPETENCIAS_LABELS = {
-  vendas: 'Vendas',
-  marketing_digital: 'Marketing Digital',
-  tecnologia_ia: 'Tecnologia & IA',
-  gestao_clientes: 'Gestão de Clientes',
-  comunicacao: 'Comunicação',
-  lideranca: 'Liderança',
-  analise_dados: 'Análise de Dados',
-  conhecimento_seguros: 'Conhecimento de Seguros',
+const RADAR_TOP_N = 8
+
+function aggregateCompetencias(h1Data) {
+  const stats = {}
+  h1Data.forEach(h => {
+    const comps = Array.isArray(h.competencias) ? h.competencias : []
+    comps.forEach(c => {
+      const label = (c.label || '').trim()
+      if (!label) return
+      const norm = label.toLowerCase()
+      if (!stats[norm]) {
+        stats[norm] = { label, count: 0, sum: 0, hasCustom: false }
+      }
+      stats[norm].count += 1
+      stats[norm].sum += Number(c.score) || 0
+      if (c.custom) stats[norm].hasCustom = true
+    })
+  })
+  return Object.values(stats)
+    .map(s => ({ ...s, avg: parseFloat((s.sum / s.count).toFixed(1)) }))
+    .sort((a, b) => b.count - a.count || b.avg - a.avg)
 }
 
 export default function AdminDashboard() {
@@ -60,15 +72,13 @@ export default function AdminDashboard() {
     navigate('/admin')
   }
 
-  // Médias de competências
-  const avgCompetencias = Object.keys(COMPETENCIAS_LABELS).map(key => {
-    const sum = h1Data.reduce((s, h) => s + (h[key] || 0), 0)
-    const avg = h1Data.length > 0 ? sum / h1Data.length : 0
-    return {
-      competencia: COMPETENCIAS_LABELS[key],
-      media: parseFloat(avg.toFixed(1)),
-    }
-  })
+  // Agregação das competências (escolhidas por participante)
+  const compStats = aggregateCompetencias(h1Data)
+  const avgCompetencias = compStats.slice(0, RADAR_TOP_N).map(s => ({
+    competencia: s.label,
+    media: s.avg,
+    count: s.count,
+  }))
 
   // Ideias por equipa
   const ideiasPorEquipa = [1, 2, 3, 4].map(n => ({
@@ -183,17 +193,24 @@ export default function AdminDashboard() {
             {activeTab === 'overview' && (
               <div className="grid lg:grid-cols-2 gap-5">
                 <div className="card">
-                  <h3 className="font-display text-lg text-navy mb-1">Mapa de competências (média do grupo)</h3>
+                  <h3 className="font-display text-lg text-navy mb-1">Top {RADAR_TOP_N} competências mais escolhidas</h3>
+                  <p className="text-xs text-gray-500 mb-2">Média de score apenas entre os participantes que escolheram cada competência.</p>
                   <div className="accent-bar mb-4" />
-                  <ResponsiveContainer width="100%" height={300}>
-                    <RadarChart data={avgCompetencias}>
-                      <PolarGrid stroke="#E5E7EB" />
-                      <PolarAngleAxis dataKey="competencia" tick={{ fontSize: 11, fill: '#050A26' }} />
-                      <PolarRadiusAxis angle={90} domain={[0, 10]} tick={{ fontSize: 10 }} />
-                      <Radar name="Média" dataKey="media" stroke="#1C3BD7" fill="#1C3BD7" fillOpacity={0.3} />
-                      <Tooltip />
-                    </RadarChart>
-                  </ResponsiveContainer>
+                  {avgCompetencias.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <RadarChart data={avgCompetencias}>
+                        <PolarGrid stroke="#E5E7EB" />
+                        <PolarAngleAxis dataKey="competencia" tick={{ fontSize: 11, fill: '#050A26' }} />
+                        <PolarRadiusAxis angle={90} domain={[0, 10]} tick={{ fontSize: 10 }} />
+                        <Radar name="Média" dataKey="media" stroke="#1C3BD7" fill="#1C3BD7" fillOpacity={0.3} />
+                        <Tooltip formatter={(v, _n, p) => [`${v} (escolhida por ${p?.payload?.count || 0})`, 'Média']} />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-[300px] flex items-center justify-center text-gray-400 text-sm">
+                      Sem dados de competências ainda.
+                    </div>
+                  )}
                 </div>
 
                 <div className="card">
@@ -273,29 +290,76 @@ export default function AdminDashboard() {
 
             {activeTab === 'h1' && (
               <div className="space-y-4">
+                {compStats.length > 0 && (
+                  <div className="card">
+                    <h3 className="font-display text-lg text-navy mb-1">Ranking de competências</h3>
+                    <p className="text-xs text-gray-500 mb-3">Quantos participantes escolheram cada uma e a média do score deles.</p>
+                    <div className="accent-bar mb-4" />
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="text-left p-2">Competência</th>
+                            <th className="text-center p-2">Escolhida por</th>
+                            <th className="text-center p-2">Média</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {compStats.map((s, i) => (
+                            <tr key={i} className="border-t border-gray-100">
+                              <td className="p-2 font-semibold text-navy flex items-center gap-2">
+                                {s.label}
+                                {s.hasCustom && (
+                                  <span className="text-[10px] uppercase tracking-wider bg-alfa-orange/10 text-alfa-orange px-1.5 py-0.5 rounded">
+                                    custom
+                                  </span>
+                                )}
+                              </td>
+                              <td className="p-2 text-center text-gray-600">{s.count}</td>
+                              <td className="p-2 text-center font-display text-alfa-blue">{s.avg}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
                 {h1Data.map(h => {
                   const part = participants.find(p => p.id === h.participant_id)
                   return (
                     <div key={h.id} className="card">
                       <h4 className="font-display text-lg text-navy mb-3">{part?.nome_completo || '—'}</h4>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                        {Object.entries(COMPETENCIAS_LABELS).map(([k, label]) => (
-                          <div key={k} className="bg-gray-50 p-3 rounded-lg">
-                            <div className="text-xs text-gray-500">{label}</div>
-                            <div className="font-display text-2xl text-alfa-blue">{h[k] || '—'}</div>
+                        {(Array.isArray(h.competencias) ? h.competencias : []).map((c, i) => (
+                          <div key={c.key || i} className="bg-gray-50 p-3 rounded-lg">
+                            <div className="text-xs text-gray-500 flex items-center gap-1">
+                              {c.label}
+                              {c.custom && (
+                                <span className="text-[10px] uppercase tracking-wider bg-alfa-orange/10 text-alfa-orange px-1.5 py-0.5 rounded">
+                                  custom
+                                </span>
+                              )}
+                            </div>
+                            <div className="font-display text-2xl text-alfa-blue">{c.score ?? '—'}</div>
                           </div>
                         ))}
                       </div>
-                      {h.processos_melhoria && (
-                        <div className="mb-2">
-                          <div className="text-xs font-semibold text-gray-500 uppercase mb-1">Processos a melhorar</div>
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{h.processos_melhoria}</p>
+                      {h.olhar_geracional && (
+                        <div className="mb-3">
+                          <div className="text-xs font-semibold text-gray-500 uppercase mb-1">Olhar geracional</div>
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{h.olhar_geracional}</p>
                         </div>
                       )}
-                      {h.oportunidades_inovacao && (
+                      {h.experiencia_cliente && (
+                        <div className="mb-3">
+                          <div className="text-xs font-semibold text-gray-500 uppercase mb-1">Experiência do cliente</div>
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{h.experiencia_cliente}</p>
+                        </div>
+                      )}
+                      {h.sucessao_emocional && (
                         <div>
-                          <div className="text-xs font-semibold text-gray-500 uppercase mb-1">Oportunidades</div>
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{h.oportunidades_inovacao}</p>
+                          <div className="text-xs font-semibold text-gray-500 uppercase mb-1">Entusiasmo & medos da sucessão</div>
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{h.sucessao_emocional}</p>
                         </div>
                       )}
                     </div>
