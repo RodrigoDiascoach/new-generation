@@ -101,21 +101,26 @@ ALTER TABLE h3_pitch_individual   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE h4_plano_acao         ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "anon all on workshop_participants" ON workshop_participants;
-CREATE POLICY "anon all on workshop_participants" ON workshop_participants
-  FOR ALL TO anon USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "public all on workshop_participants" ON workshop_participants;
+CREATE POLICY "public all on workshop_participants" ON workshop_participants
+  FOR ALL USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "anon all on h1_competencias" ON h1_competencias;
-CREATE POLICY "anon all on h1_competencias" ON h1_competencias
-  FOR ALL TO anon USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "public all on h1_competencias" ON h1_competencias;
+CREATE POLICY "public all on h1_competencias" ON h1_competencias
+  FOR ALL USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "anon all on h2_ideias_equipa" ON h2_ideias_equipa;
-CREATE POLICY "anon all on h2_ideias_equipa" ON h2_ideias_equipa
-  FOR ALL TO anon USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "public all on h2_ideias_equipa" ON h2_ideias_equipa;
+CREATE POLICY "public all on h2_ideias_equipa" ON h2_ideias_equipa
+  FOR ALL USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "anon all on h3_pitch_individual" ON h3_pitch_individual;
-CREATE POLICY "anon all on h3_pitch_individual" ON h3_pitch_individual
-  FOR ALL TO anon USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "public all on h3_pitch_individual" ON h3_pitch_individual;
+CREATE POLICY "public all on h3_pitch_individual" ON h3_pitch_individual
+  FOR ALL USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "anon all on h4_plano_acao" ON h4_plano_acao;
-CREATE POLICY "anon all on h4_plano_acao" ON h4_plano_acao
-  FOR ALL TO anon USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "public all on h4_plano_acao" ON h4_plano_acao;
+CREATE POLICY "public all on h4_plano_acao" ON h4_plano_acao
+  FOR ALL USING (true) WITH CHECK (true);
