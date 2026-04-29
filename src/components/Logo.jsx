@@ -27,7 +27,7 @@ export default function Logo({ className = '', size = 'md' }) {
           AGEBROKERS
         </div>
         <div className={`font-display text-alfa-orange leading-none mt-0.5 ${s.sub}`}>
-          AGELegacy
+          New Generation
         </div>
       </div>
     </div>

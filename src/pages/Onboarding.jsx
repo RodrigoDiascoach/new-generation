@@ -65,7 +65,7 @@ export default function Onboarding() {
             New Generation AGEBROKERS
           </h1>
           <p className="text-lg text-gray-600">
-            Bem-vindo ao AGELegacy. Antes de começar, deixa os teus dados.
+            Bem-vindo ao New Generation AGEBROKERS. Antes de começar, deixa os teus dados.
           </p>
         </div>
 

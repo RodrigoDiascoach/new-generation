@@ -91,7 +91,7 @@ export default function AdminDashboard() {
   function exportData() {
     const exportObj = {
       generated_at: new Date().toISOString(),
-      workshop: 'New Generation AGEBROKERS - AGELegacy',
+      workshop: 'New Generation AGEBROKERS',
       total_participants: participants.length,
       participants,
       h1_competencias: h1Data,

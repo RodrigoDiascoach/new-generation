@@ -46,7 +46,7 @@ export default function Layout({ children, showLogout = true }) {
 
       <footer className="border-t border-gray-100 py-6 mt-12">
         <div className="max-w-6xl mx-auto px-4 text-center text-sm text-gray-500">
-          New Generation AGEBROKERS · AGELegacy · Workshop 1 Maio 2026
+          New Generation AGEBROKERS · Workshop 1 Maio 2026
         </div>
       </footer>
     </div>

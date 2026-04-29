@@ -20,7 +20,7 @@ export default function AdminLogin() {
     setError('')
     setLoading(true)
 
-    const correctPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'AGELegacy2026'
+    const correctPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'NewGeneration2026'
 
     setTimeout(() => {
       if (password === correctPassword) {

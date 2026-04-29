@@ -1,4 +1,4 @@
-# New Generation AGEBROKERS · AGELegacy
+# New Generation AGEBROKERS
 
 Aplicação web para o workshop **New Generation AGEBROKERS** — Preparar a Transição, Garantir o Sucesso.
 
@@ -78,7 +78,7 @@ Os ficheiros vão para a pasta `dist/`.
 
 URL: `https://teu-dominio.com/admin`
 
-**Password padrão:** `AGELegacy2026`
+**Password padrão:** `NewGeneration2026`
 
 > Muda esta password no ficheiro `.env` (variável `VITE_ADMIN_PASSWORD`) antes de fazer deploy.
 
@@ -136,7 +136,7 @@ Todas com Row Level Security ativada e políticas públicas (workshop sem login)
 src/
 ├── components/
 │   ├── Layout.jsx          # Header + footer + brand bar
-│   ├── Logo.jsx            # Logo AGEBROKERS / AGELegacy
+│   ├── Logo.jsx            # Logo New Generation AGEBROKERS
 │   └── ModuleHeader.jsx    # Header reutilizável dos módulos
 ├── lib/
 │   ├── supabase.js         # Cliente Supabase

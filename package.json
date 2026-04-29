@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Workshop New Generation AGEBROKERS - AGELegacy",
+  "description": "Workshop New Generation AGEBROKERS",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
