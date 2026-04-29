@@ -13,6 +13,20 @@ const STORAGE_KEY = 'agebrokers_admin_auth'
 
 const RADAR_TOP_N = 8
 
+const CAMINHOS = ['sucessor', 'apoiante', 'independente', 'explorando']
+const CAMINHO_LABELS = {
+  sucessor: 'Sucessor',
+  apoiante: 'Apoiante',
+  independente: 'Independente',
+  explorando: 'A explorar',
+}
+const CAMINHO_COLORS = {
+  sucessor: 'bg-alfa-blue/10 text-alfa-blue border-alfa-blue/30',
+  apoiante: 'bg-purple-100 text-purple-700 border-purple-200',
+  independente: 'bg-alfa-orange/10 text-alfa-orange border-alfa-orange/30',
+  explorando: 'bg-gray-100 text-gray-600 border-gray-200',
+}
+
 function aggregateCompetencias(h1Data) {
   const stats = {}
   h1Data.forEach(h => {
@@ -79,6 +93,14 @@ export default function AdminDashboard() {
     media: s.avg,
     count: s.count,
   }))
+
+  // Distribuição por caminho
+  const caminhoStats = CAMINHOS.map(c => ({
+    caminho: c,
+    label: CAMINHO_LABELS[c],
+    count: participants.filter(p => p.caminho === c).length,
+  }))
+  const caminhoSemResposta = participants.filter(p => !p.caminho).length
 
   // Ideias por equipa
   const ideiasPorEquipa = [1, 2, 3, 4].map(n => ({
@@ -239,6 +261,26 @@ export default function AdminDashboard() {
                     ))}
                   </div>
                 </div>
+
+                <div className="card lg:col-span-2">
+                  <h3 className="font-display text-lg text-navy mb-1">Distribuição por caminho</h3>
+                  <p className="text-xs text-gray-500 mb-3">Quantos participantes em cada perfil profissional.</p>
+                  <div className="accent-bar mb-4" />
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {caminhoStats.map(s => (
+                      <div key={s.caminho} className={`p-4 rounded-lg border ${CAMINHO_COLORS[s.caminho]}`}>
+                        <div className="font-display text-3xl">{s.count}</div>
+                        <div className="text-sm font-semibold">{s.label}</div>
+                      </div>
+                    ))}
+                    {caminhoSemResposta > 0 && (
+                      <div className="p-4 rounded-lg border bg-gray-50 text-gray-400 border-gray-200">
+                        <div className="font-display text-3xl">{caminhoSemResposta}</div>
+                        <div className="text-sm font-semibold">Sem resposta</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -252,6 +294,7 @@ export default function AdminDashboard() {
                         <th className="text-left p-3">Nome</th>
                         <th className="text-left p-3">Entidade</th>
                         <th className="text-left p-3">Relação</th>
+                        <th className="text-left p-3">Caminho</th>
                         <th className="text-center p-3">Equipa</th>
                         <th className="text-center p-3">Progresso</th>
                       </tr>
@@ -265,6 +308,15 @@ export default function AdminDashboard() {
                             <td className="p-3 font-semibold">{p.nome_completo}</td>
                             <td className="p-3 text-gray-600">{p.entidade_nome || '—'}</td>
                             <td className="p-3 text-gray-600">{p.relacao_parentesco || '—'}</td>
+                            <td className="p-3">
+                              {p.caminho ? (
+                                <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold border ${CAMINHO_COLORS[p.caminho]}`}>
+                                  {CAMINHO_LABELS[p.caminho]}
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">—</span>
+                              )}
+                            </td>
                             <td className="p-3 text-center">{p.equipa_numero || '—'}</td>
                             <td className="p-3 text-center">
                               <div className="inline-flex gap-1">
@@ -280,7 +332,7 @@ export default function AdminDashboard() {
                         )
                       })}
                       {participants.length === 0 && (
-                        <tr><td colSpan="5" className="p-8 text-center text-gray-400">Sem participantes ainda.</td></tr>
+                        <tr><td colSpan="6" className="p-8 text-center text-gray-400">Sem participantes ainda.</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -428,12 +480,20 @@ export default function AdminDashboard() {
               <div className="space-y-4">
                 {h4Data.map(h => {
                   const part = participants.find(p => p.id === h.participant_id)
+                  const respostasCaminho = Array.isArray(h.respostas_caminho) ? h.respostas_caminho : []
                   return (
                     <div key={h.id} className="card">
-                      <div className="flex justify-between items-start mb-3">
-                        <h4 className="font-display text-lg text-navy">{part?.nome_completo || '—'}</h4>
+                      <div className="flex justify-between items-start mb-3 gap-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-display text-lg text-navy">{part?.nome_completo || '—'}</h4>
+                          {part?.caminho && (
+                            <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold border ${CAMINHO_COLORS[part.caminho]}`}>
+                              {CAMINHO_LABELS[part.caminho]}
+                            </span>
+                          )}
+                        </div>
                         {h.rating_workshop && (
-                          <div className="bg-alfa-blue text-white px-3 py-1 rounded-full text-sm font-bold">
+                          <div className="bg-alfa-blue text-white px-3 py-1 rounded-full text-sm font-bold whitespace-nowrap">
                             {h.rating_workshop}/10
                           </div>
                         )}
@@ -441,7 +501,24 @@ export default function AdminDashboard() {
                       <div className="space-y-3">
                         <ActionBlock icon={CheckCircle2} label="Execução imediata" text={h.execucao_imediata} />
                         <ActionBlock icon={TrendingUp} label="Desenvolvimento — 6 meses" text={h.desenvolvimento_6m} />
-                        <ActionBlock icon={Award} label="Compromisso de liderança" text={h.compromisso_lideranca} />
+                        <ActionBlock icon={Award} label="Compromisso pessoal" text={h.compromisso_lideranca} />
+                        {respostasCaminho.length > 0 && (
+                          <div className="bg-alfa-blue/5 border border-alfa-blue/20 p-3 rounded-lg">
+                            <div className="text-xs font-semibold text-alfa-blue uppercase tracking-wider mb-2">
+                              Respostas do caminho · {part?.caminho ? CAMINHO_LABELS[part.caminho] : '—'}
+                            </div>
+                            <div className="space-y-3">
+                              {respostasCaminho.map((r, i) => (
+                                <div key={r.key || i}>
+                                  <div className="text-xs font-semibold text-gray-600 mb-1">{r.label}</div>
+                                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                                    {r.answer || <span className="text-gray-400 italic">— vazio —</span>}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                         {h.feedback_workshop && (
                           <ActionBlock icon={Star} label="Feedback" text={h.feedback_workshop} />
                         )}

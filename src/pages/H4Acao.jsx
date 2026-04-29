@@ -1,13 +1,40 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Save, CheckCircle2, TrendingUp, Briefcase, MessageSquare } from 'lucide-react'
+import { Loader2, Save, CheckCircle2, TrendingUp, Briefcase, MessageSquare, Compass } from 'lucide-react'
 import Layout from '../components/Layout'
 import ModuleHeader from '../components/ModuleHeader'
 import { supabase } from '../lib/supabase'
 import { useParticipant } from '../lib/ParticipantContext'
 
+const PERGUNTAS_CAMINHO = {
+  sucessor: [
+    { key: 'preocupacao_lideranca', label: 'Que aspeto da liderança te preocupa mais?' },
+    { key: 'aprender_pais', label: 'O que precisas de aprender com os teus pais antes da transição?' },
+  ],
+  apoiante: [
+    { key: 'tipo_envolvimento', label: 'Que tipo de envolvimento te faz mais sentido — board, consultor pontual, embaixador?' },
+    { key: 'comunicacao_pais', label: 'Como vais comunicar este papel aos teus pais?' },
+  ],
+  independente: [
+    { key: 'carreira_propria', label: 'Que carreira ou projeto estás a construir (ou queres construir)?' },
+    { key: 'relacao_negocio', label: 'Como vês a tua relação futura com o negócio familiar — zero, cliente, referenciador, outro?' },
+  ],
+  explorando: [
+    { key: 'atrai_sucessao', label: 'O que te atrai no caminho da sucessão?' },
+    { key: 'assusta_sucessao', label: 'O que te assusta ou repele?' },
+    { key: 'conversa_pais', label: 'Que conversa precisas ter com os teus pais para ganhares clareza?' },
+  ],
+}
+
+const CAMINHO_LABELS = {
+  sucessor: 'Sucessor',
+  apoiante: 'Apoiante',
+  independente: 'Independente',
+  explorando: 'A explorar',
+}
+
 export default function H4Acao() {
-  const { participantId, refresh } = useParticipant()
+  const { participant, participantId, refresh } = useParticipant()
   const navigate = useNavigate()
   const [data, setData] = useState({
     execucao_imediata: '',
@@ -16,8 +43,12 @@ export default function H4Acao() {
     feedback_workshop: '',
     rating_workshop: 8,
   })
+  const [respostasCaminho, setRespostasCaminho] = useState({})
   const [recordId, setRecordId] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  const caminho = participant?.caminho || 'explorando'
+  const perguntasCaminho = PERGUNTAS_CAMINHO[caminho] || PERGUNTAS_CAMINHO.explorando
 
   useEffect(() => {
     if (!participantId) return
@@ -40,6 +71,11 @@ export default function H4Acao() {
         feedback_workshop: existing.feedback_workshop || '',
         rating_workshop: existing.rating_workshop || 8,
       })
+      const respostas = {}
+      ;(existing.respostas_caminho || []).forEach(r => {
+        respostas[r.key] = r.answer || ''
+      })
+      setRespostasCaminho(respostas)
     }
   }
 
@@ -47,9 +83,18 @@ export default function H4Acao() {
     setData({ ...data, [key]: value })
   }
 
+  function updateCaminho(key, value) {
+    setRespostasCaminho({ ...respostasCaminho, [key]: value })
+  }
+
   async function handleSave() {
     setLoading(true)
-    const payload = { participant_id: participantId, ...data }
+    const respostas_caminho = perguntasCaminho.map(p => ({
+      key: p.key,
+      label: p.label,
+      answer: respostasCaminho[p.key] || '',
+    }))
+    const payload = { participant_id: participantId, ...data, respostas_caminho }
 
     if (recordId) {
       await supabase.from('h4_plano_acao').update(payload).eq('id', recordId)
@@ -118,18 +163,46 @@ export default function H4Acao() {
           <div className="card border-l-4 border-l-alfa-orange">
             <div className="flex items-center gap-2 mb-1">
               <Briefcase className="text-alfa-orange" size={20} />
-              <h3 className="font-display text-xl text-navy">Compromisso de liderança</h3>
+              <h3 className="font-display text-xl text-navy">Compromisso pessoal</h3>
             </div>
             <p className="text-sm text-gray-500 mb-3">
-              Como vais honrar o legado e dar continuidade à carteira familiar?
+              Como queres ser visto pelos clientes ou pela tua área profissional daqui a 3 anos?
             </p>
             <textarea
               value={data.compromisso_lideranca}
               onChange={(e) => update('compromisso_lideranca', e.target.value)}
               rows={4}
               className="input-field resize-none text-sm"
-              placeholder="O teu compromisso por escrito. Como queres ser visto pelos clientes do teu pai daqui a 3 anos?"
+              placeholder="Quer assumas o negócio, fiques ligado, ou sigas outro caminho — o teu compromisso por escrito."
             />
+          </div>
+
+          <div className="card border-l-4 border-l-alfa-blue">
+            <div className="flex items-center gap-2 mb-1">
+              <Compass className="text-alfa-blue" size={20} />
+              <h3 className="font-display text-xl text-navy">O teu caminho</h3>
+              <span className="ml-auto text-[10px] uppercase tracking-wider bg-alfa-blue/10 text-alfa-blue px-2 py-0.5 rounded">
+                {CAMINHO_LABELS[caminho]}
+              </span>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Estas perguntas adaptam-se ao caminho que escolheste no início. Sê honesto.
+            </p>
+            <div className="space-y-4">
+              {perguntasCaminho.map(p => (
+                <div key={p.key}>
+                  <label className="block font-semibold text-navy text-sm mb-2">
+                    {p.label}
+                  </label>
+                  <textarea
+                    value={respostasCaminho[p.key] || ''}
+                    onChange={(e) => updateCaminho(p.key, e.target.value)}
+                    rows={3}
+                    className="input-field resize-none text-sm"
+                  />
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="card bg-gray-50">

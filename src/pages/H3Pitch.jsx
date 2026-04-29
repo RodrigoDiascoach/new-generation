@@ -37,7 +37,7 @@ const QUADRANTES = [
     color: 'orange',
     title: 'Soluções propostas',
     subtitle: 'A tua proposta de melhoria',
-    placeholder: 'Como vais usar as tuas valências para acrescentar valor ao negócio dos teus pais e à rede Ageas?',
+    placeholder: 'Como pensas usar as tuas valências — no negócio da tua família, na tua carreira, ou em ambos?',
   },
 ]
 

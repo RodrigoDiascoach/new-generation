@@ -17,6 +17,7 @@ export default function Onboarding() {
     entidade_nome: '',
     mediador_responsavel: '',
     relacao_parentesco: '',
+    caminho: 'explorando',
   })
 
   function update(field, value) {
@@ -165,6 +166,45 @@ export default function Onboarding() {
               <option value="colaborador">Colaborador / Colaboradora</option>
               <option value="outro">Outro</option>
             </select>
+          </div>
+
+          <div className="pt-4 border-t border-gray-100">
+            <h3 className="text-lg font-display text-navy mb-1">
+              O teu caminho
+            </h3>
+            <p className="text-sm text-gray-500 mb-3">
+              Sê honesto. Não há resposta certa — o workshop adapta-se a ti.
+            </p>
+            <div className="space-y-2">
+              {[
+                { value: 'sucessor', label: 'Quero liderar o negócio', desc: 'Vou assumir o dia-a-dia da mediadora.' },
+                { value: 'apoiante', label: 'Quero apoiar sem liderar', desc: 'Ficar ligado como board, consultor ou embaixador.' },
+                { value: 'independente', label: 'Quero o meu próprio caminho', desc: 'Construir uma carreira/projeto fora do negócio familiar.' },
+                { value: 'explorando', label: 'Ainda estou a descobrir', desc: 'Quero usar o workshop para ganhar clareza.' },
+              ].map(opt => (
+                <label
+                  key={opt.value}
+                  className={`flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                    form.caminho === opt.value
+                      ? 'border-alfa-blue bg-alfa-blue/5'
+                      : 'border-gray-200 hover:border-alfa-blue/50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="caminho"
+                    value={opt.value}
+                    checked={form.caminho === opt.value}
+                    onChange={(e) => update('caminho', e.target.value)}
+                    className="mt-1 accent-alfa-blue"
+                  />
+                  <div>
+                    <div className="font-semibold text-navy text-sm">{opt.label}</div>
+                    <div className="text-xs text-gray-500">{opt.desc}</div>
+                  </div>
+                </label>
+              ))}
+            </div>
           </div>
 
           {error && (

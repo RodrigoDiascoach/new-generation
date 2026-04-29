@@ -374,7 +374,7 @@ export default function H1Identidade() {
 
                 <div>
                   <label className="block font-semibold text-navy mb-2">
-                    O que te entusiasma e o que te assusta na ideia de continuar este negócio?
+                    Quando pensas no negócio onde a tua família atua, o que te entusiasma e o que te assusta?
                   </label>
                   <textarea
                     value={sucessaoEmocional}
