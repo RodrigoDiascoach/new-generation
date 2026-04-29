@@ -8,6 +8,7 @@ import H3Pitch from './pages/H3Pitch'
 import H4Acao from './pages/H4Acao'
 import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
+import Apresentacao from './pages/Apresentacao'
 
 function ProtectedRoute({ children }) {
   const { participantId, loading } = useParticipant()
@@ -50,6 +51,7 @@ export default function App() {
         {/* Admin routes */}
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/apresentacao" element={<Apresentacao />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

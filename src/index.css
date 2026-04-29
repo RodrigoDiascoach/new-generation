@@ -59,3 +59,10 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* Apresentação — fallback de impressão (1 slide por página) */
+@media print {
+  body { background: white !important; }
+  .page-break { page-break-after: always; break-after: page; }
+  .print-slide { min-height: 100vh; }
+}

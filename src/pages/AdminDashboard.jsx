@@ -2,51 +2,17 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import {
   Users, Lightbulb, CheckCircle2, Star, Download, LogOut,
-  RefreshCw, Award, Heart, Ban, TrendingUp
+  RefreshCw, Award, Heart, Ban, TrendingUp, Play
 } from 'lucide-react'
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import Logo from '../components/Logo'
 import { supabase } from '../lib/supabase'
 import { isAdminAuth } from './AdminLogin'
+import { CAMINHOS, CAMINHO_LABELS, CAMINHO_COLORS, aggregateCompetencias } from '../lib/workshop-utils'
 
 const STORAGE_KEY = 'agebrokers_admin_auth'
 
 const RADAR_TOP_N = 8
-
-const CAMINHOS = ['sucessor', 'apoiante', 'independente', 'explorando']
-const CAMINHO_LABELS = {
-  sucessor: 'Sucessor',
-  apoiante: 'Apoiante',
-  independente: 'Independente',
-  explorando: 'A explorar',
-}
-const CAMINHO_COLORS = {
-  sucessor: 'bg-alfa-blue/10 text-alfa-blue border-alfa-blue/30',
-  apoiante: 'bg-purple-100 text-purple-700 border-purple-200',
-  independente: 'bg-alfa-orange/10 text-alfa-orange border-alfa-orange/30',
-  explorando: 'bg-gray-100 text-gray-600 border-gray-200',
-}
-
-function aggregateCompetencias(h1Data) {
-  const stats = {}
-  h1Data.forEach(h => {
-    const comps = Array.isArray(h.competencias) ? h.competencias : []
-    comps.forEach(c => {
-      const label = (c.label || '').trim()
-      if (!label) return
-      const norm = label.toLowerCase()
-      if (!stats[norm]) {
-        stats[norm] = { label, count: 0, sum: 0, hasCustom: false }
-      }
-      stats[norm].count += 1
-      stats[norm].sum += Number(c.score) || 0
-      if (c.custom) stats[norm].hasCustom = true
-    })
-  })
-  return Object.values(stats)
-    .map(s => ({ ...s, avg: parseFloat((s.sum / s.count).toFixed(1)) }))
-    .sort((a, b) => b.count - a.count || b.avg - a.avg)
-}
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
@@ -152,6 +118,13 @@ export default function AdminDashboard() {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate('/admin/apresentacao')}
+              className="bg-alfa-blue text-white font-semibold py-2 px-3 text-sm rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            >
+              <Play size={16} />
+              <span className="hidden sm:inline">Apresentação</span>
+            </button>
             <button onClick={loadAll} className="btn-secondary py-2 px-3 text-sm">
               <RefreshCw size={16} />
             </button>
