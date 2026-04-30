@@ -44,6 +44,7 @@ export default function Briefing() {
   const navigate = useNavigate()
   const [participant, setParticipant] = useState(null)
   const [h1, setH1] = useState(null)
+  const [h2, setH2] = useState([])
   const [h3, setH3] = useState(null)
   const [h4, setH4] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -54,14 +55,16 @@ export default function Briefing() {
     Promise.all([
       supabase.from('workshop_participants').select('*').eq('id', participantId).maybeSingle(),
       supabase.from('h1_competencias').select('*').eq('participant_id', participantId).maybeSingle(),
+      supabase.from('h2_ideias_equipa').select('*').eq('participant_id', participantId).order('created_at'),
       supabase.from('h3_pitch_individual').select('*').eq('participant_id', participantId).maybeSingle(),
       supabase.from('h4_plano_acao').select('*').eq('participant_id', participantId).maybeSingle(),
-    ]).then(([p, q1, q3, q4]) => {
+    ]).then(([p, q1, q2, q3, q4]) => {
       if (!p.data) {
         setNotFound(true)
       } else {
         setParticipant(p.data)
         setH1(q1.data)
+        setH2(q2.data || [])
         setH3(q3.data)
         setH4(q4.data)
       }
@@ -141,63 +144,38 @@ export default function Briefing() {
           </div>
         </div>
 
-        {/* "Não disse" highlight (se partilhado) */}
-        {h4?.nao_disse?.trim() && h4?.nao_disse_partilhar && (
-          <div className="bg-orange-50 border-2 border-alfa-orange/30 rounded-lg p-4 mb-5 break-inside-avoid">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="text-alfa-orange flex-shrink-0 mt-0.5" size={18} />
-              <div className="flex-1">
-                <div className="text-xs font-semibold text-alfa-orange uppercase tracking-wider mb-1">
-                  O que ainda não vos tinha dito
+
+        {/* H1 — Competências completas */}
+        {competencias.length > 0 && (
+          <Section title="Roda das competências — avaliação completa" subtle>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
+              {[...competencias].sort((a, b) => (b.score || 0) - (a.score || 0)).map(c => (
+                <div key={c.key} className="flex items-center justify-between py-0.5 border-b border-gray-100 last:border-0">
+                  <div className="text-sm flex items-center gap-1">
+                    <span className="font-semibold text-navy">{c.label}</span>
+                    {c.custom && <span className="text-[9px] uppercase bg-alfa-orange/10 text-alfa-orange px-1 rounded">custom</span>}
+                  </div>
+                  <span className={`font-display text-base tabular-nums ${c.score >= 7 ? 'text-alfa-blue' : c.score <= 4 ? 'text-alfa-orange' : 'text-gray-500'}`}>
+                    {c.score}
+                  </span>
                 </div>
-                <p className="text-sm text-navy italic leading-relaxed">"{h4.nao_disse}"</p>
-              </div>
+              ))}
             </div>
-          </div>
+          </Section>
         )}
 
-        {/* 2-col: Forças e Gaps */}
-        <div className="grid grid-cols-2 gap-4 mb-5">
-          <Section title="Forças (top 3)" subtle>
-            {top3Fortes.length === 0 && <p className="text-gray-400 text-xs">—</p>}
-            {top3Fortes.map(c => (
-              <div key={c.key} className="flex items-center justify-between py-1">
-                <div className="text-sm">
-                  <span className="font-semibold text-navy">{c.label}</span>
-                  {c.custom && <span className="ml-1 text-[9px] uppercase bg-alfa-orange/10 text-alfa-orange px-1 rounded">custom</span>}
-                </div>
-                <span className="font-display text-alfa-blue text-lg tabular-nums">{c.score}</span>
-              </div>
-            ))}
-          </Section>
-
-          <Section title="A desenvolver (top 3)" subtle>
-            {top3Gaps.length === 0 && <p className="text-gray-400 text-xs">—</p>}
-            {top3Gaps.map(c => (
-              <div key={c.key} className="flex items-center justify-between py-1">
-                <div className="text-sm">
-                  <span className="font-semibold text-navy">{c.label}</span>
-                </div>
-                <span className="font-display text-alfa-orange text-lg tabular-nums">{c.score}</span>
-              </div>
-            ))}
-          </Section>
-        </div>
-
-        {/* Olhar geracional + visão cliente + lado emocional */}
-        <div className="space-y-4 mb-5">
+        {/* H1 — Perguntas abertas */}
+        <div className="space-y-4 mb-5 mt-4">
           {h1?.olhar_geracional && (
             <Section title="Como vê o vosso negócio">
               <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{h1.olhar_geracional}</p>
             </Section>
           )}
-
           {h1?.experiencia_cliente && (
             <Section title="A experiência de cliente que imagina">
               <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{h1.experiencia_cliente}</p>
             </Section>
           )}
-
           {h1?.sucessao_emocional && (
             <Section title="Entusiasmos e medos">
               <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{h1.sucessao_emocional}</p>
@@ -205,8 +183,46 @@ export default function Briefing() {
           )}
         </div>
 
-        {/* Plano de ação */}
-        <Section title="Plano de ação">
+        {/* H2 — Ideias do brainstorming */}
+        {h2.length > 0 && (
+          <Section title={`H2 · Ideias do brainstorming (${h2.length})`}>
+            <div className="space-y-2">
+              {h2.map((ideia, i) => (
+                <div key={ideia.id || i} className="border-b border-gray-100 pb-2 last:border-0 last:pb-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-semibold text-navy text-sm">{ideia.ideia_titulo}</span>
+                    <span className="text-[10px] uppercase bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded whitespace-nowrap">{ideia.categoria}</span>
+                  </div>
+                  {ideia.ideia_descricao && (
+                    <p className="text-xs text-gray-600 mt-0.5 whitespace-pre-wrap">{ideia.ideia_descricao}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {/* H3 — 4 Quadrantes */}
+        {h3 && (
+          <Section title="H3 · Pitch individual — 4 quadrantes" accent>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { key: 'valencias', label: 'Valências' },
+                { key: 'o_que_gosto', label: 'O que gosta' },
+                { key: 'o_que_nao_gosto', label: 'O que não gosta' },
+                { key: 'solucoes_propostas', label: 'Soluções propostas' },
+              ].map(q => h3[q.key]?.trim() && (
+                <div key={q.key}>
+                  <div className="text-[10px] font-semibold text-alfa-blue uppercase tracking-wider mb-1">{q.label}</div>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{h3[q.key]}</p>
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {/* H4 — Plano de ação */}
+        <Section title="H4 · Plano de ação">
           <div className="space-y-3">
             {h4?.execucao_imediata && (
               <div>
@@ -229,7 +245,7 @@ export default function Briefing() {
           </div>
         </Section>
 
-        {/* Respostas específicas do caminho */}
+        {/* H4 — Respostas específicas do caminho */}
         {respostasCaminho.length > 0 && (
           <Section title={`Respostas específicas · ${CAMINHO_LABELS[caminho]}`} accent>
             <div className="space-y-3">
@@ -240,6 +256,39 @@ export default function Briefing() {
                 </div>
               ))}
             </div>
+          </Section>
+        )}
+
+        {/* H4 — "Não disse" (sempre visível para o admin) */}
+        {h4?.nao_disse?.trim() && (
+          <div className={`rounded-lg p-4 mb-5 border-2 ${h4.nao_disse_partilhar ? 'bg-orange-50 border-alfa-orange/30' : 'bg-gray-50 border-gray-300'}`}>
+            <div className="flex items-start gap-2">
+              {h4.nao_disse_partilhar
+                ? <AlertCircle className="text-alfa-orange flex-shrink-0 mt-0.5" size={16} />
+                : <Lock className="text-gray-400 flex-shrink-0 mt-0.5" size={16} />
+              }
+              <div>
+                <div className={`text-xs font-semibold uppercase tracking-wider mb-1 ${h4.nao_disse_partilhar ? 'text-alfa-orange' : 'text-gray-400'}`}>
+                  O que ainda não tinha dito {!h4.nao_disse_partilhar && '· Privado (só visível aqui)'}
+                </div>
+                <p className="text-sm text-navy italic leading-relaxed">"{h4.nao_disse}"</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* H4 — Feedback do workshop */}
+        {(h4?.feedback_workshop || h4?.rating_workshop) && (
+          <Section title="Feedback do workshop" subtle>
+            {h4.rating_workshop && (
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs text-gray-500">Avaliação geral:</span>
+                <span className="font-display text-xl text-alfa-blue tabular-nums">{h4.rating_workshop}<span className="text-gray-400 text-sm"> / 10</span></span>
+              </div>
+            )}
+            {h4.feedback_workshop && (
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{h4.feedback_workshop}</p>
+            )}
           </Section>
         )}
 
@@ -262,13 +311,6 @@ export default function Briefing() {
           </ol>
         </div>
 
-        {/* Privacy note (se há "não disse" mas NÃO partilhado) */}
-        {h4?.nao_disse?.trim() && !h4?.nao_disse_partilhar && (
-          <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded text-xs text-gray-500 flex items-center gap-2 print:hidden">
-            <Lock size={12} />
-            <span>O sucessor escreveu uma resposta privada em "O que ainda não disseste" — só visível no admin, não incluída neste briefing.</span>
-          </div>
-        )}
 
         {/* Footer */}
         <div className="mt-6 pt-3 border-t border-gray-100 text-[9pt] text-gray-400 text-center">
