@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Save, Star, Heart, Ban, Lightbulb } from 'lucide-react'
+import { Loader2, Save, Star, Heart, Ban, Lightbulb, Info } from 'lucide-react'
 import Layout from '../components/Layout'
 import ModuleHeader from '../components/ModuleHeader'
 import { supabase } from '../lib/supabase'
@@ -105,13 +105,20 @@ export default function H3Pitch() {
 
   return (
     <Layout>
-      <div className="animate-fade-in max-w-5xl">
+      <div className="animate-fade-in max-w-4xl mx-auto">
         <ModuleHeader
           label="H3 · Partilha & Pitch"
           title="Os teus 4 quadrantes"
           description="Reflete em cada área. Não tem de ser perfeito, tem de ser verdadeiro."
           color="blue"
         />
+
+        <div className="mb-6 flex gap-3 p-4 bg-alfa-blue/5 border border-alfa-blue/20 rounded-xl">
+          <Info className="text-alfa-blue shrink-0 mt-0.5" size={18} />
+          <p className="text-sm text-navy/80 leading-relaxed">
+            Saber o que fazes não chega — precisas de comunicar o teu valor de forma clara para os teus pais, para clientes, para parceiros. Estes 4 quadrantes ajudam-te a estruturar o que trazes, o que te move, o que te trava, e o que propões concretamente.
+          </p>
+        </div>
 
         <div className="grid md:grid-cols-2 gap-5 mb-6">
           {QUADRANTES.map((q) => {

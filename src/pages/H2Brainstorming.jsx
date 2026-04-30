@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Plus, Trash2, Users } from 'lucide-react'
+import { Loader2, Plus, Trash2, Users, Info } from 'lucide-react'
 import Layout from '../components/Layout'
 import ModuleHeader from '../components/ModuleHeader'
 import { supabase } from '../lib/supabase'
@@ -83,7 +83,7 @@ export default function H2Brainstorming() {
 
   return (
     <Layout>
-      <div className="animate-fade-in max-w-4xl">
+      <div className="animate-fade-in max-w-4xl mx-auto">
         <ModuleHeader
           label="H2 · Brainstorming Ativo"
           title="Como tornar os seguros indispensáveis?"
@@ -91,18 +91,25 @@ export default function H2Brainstorming() {
           color="orange"
         />
 
+        <div className="mb-6 flex gap-3 p-4 bg-alfa-orange/5 border border-alfa-orange/20 rounded-xl">
+          <Info className="text-alfa-orange shrink-0 mt-0.5" size={18} />
+          <p className="text-sm text-navy/80 leading-relaxed">
+            Os melhores produtos e serviços surgem quando pessoas com perspetivas diferentes colaboram. Traz o teu olhar de nova geração para encontrar soluções práticas — não em teoria, mas com ideias que podem ser implementadas já esta semana.
+          </p>
+        </div>
+
         {/* Seleção de equipa */}
         <div className="card mb-6 bg-gradient-to-br from-orange-50 to-white border-alfa-orange/20">
           <div className="flex items-center gap-3 mb-3">
             <Users className="text-alfa-orange" size={20} />
             <h2 className="font-display text-lg text-navy">A tua equipa</h2>
           </div>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[1, 2, 3, 4].map(n => (
               <button
                 key={n}
                 onClick={() => setEquipa(n)}
-                className={`py-3 rounded-lg font-display text-lg transition-all ${
+                className={`py-3 rounded-lg font-display text-base md:text-lg transition-all ${
                   equipa === n
                     ? 'bg-alfa-orange text-white shadow-md'
                     : 'bg-white text-navy border-2 border-gray-200 hover:border-alfa-orange'

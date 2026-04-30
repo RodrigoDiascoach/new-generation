@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Save, Plus, X, ArrowLeft, ArrowRight } from 'lucide-react'
+import { Loader2, Save, Plus, X, ArrowLeft, ArrowRight, Info } from 'lucide-react'
 import Layout from '../components/Layout'
 import ModuleHeader from '../components/ModuleHeader'
 import { supabase } from '../lib/supabase'
@@ -165,7 +165,7 @@ export default function H1Identidade() {
 
   return (
     <Layout>
-      <div className="animate-fade-in max-w-4xl">
+      <div className="animate-fade-in max-w-4xl mx-auto">
         <ModuleHeader
           label="H1 · Identidade & Potencial"
           title="Roda das Competências"
@@ -176,6 +176,13 @@ export default function H1Identidade() {
           }
           color="blue"
         />
+
+        <div className="mb-6 flex gap-3 p-4 bg-alfa-blue/5 border border-alfa-blue/20 rounded-xl">
+          <Info className="text-alfa-blue shrink-0 mt-0.5" size={18} />
+          <p className="text-sm text-navy/80 leading-relaxed">
+            Antes de decidires o teu próximo passo, é preciso saberes de onde partes. A roda de competências revela onde te sentes forte e onde ainda tens espaço para crescer — e essa honestidade é o ponto de partida de qualquer plano que resulte.
+          </p>
+        </div>
 
         {phase === 'select' && (
           <>

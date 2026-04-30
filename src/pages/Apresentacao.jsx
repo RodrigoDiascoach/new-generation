@@ -228,6 +228,7 @@ function SlideQuemVeio({ participants }) {
       <SlideHeader
         title="Quem esteve aqui hoje"
         subtitle="Nem todos querem suceder — e isso é saudável."
+        note="Os jovens escolheram o seu caminho antes de fazerem qualquer exercício. Não há resposta certa — cada caminho é legítimo. O que importa é a consciência da escolha, não o resultado."
       />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto mt-12">
         {counts.map(c => (
@@ -253,6 +254,7 @@ function SlideForcas({ compStats }) {
       <SlideHeader
         title="Onde se sentem fortes"
         subtitle="Eles sabem onde brilham. Aproveitem."
+        note="Estas são as competências onde o grupo se autoavalia melhor. São o ponto de partida para conversas sobre quem pode assumir o quê — e para distribuição de responsabilidades que faça sentido para ambas as gerações."
       />
       <div className="max-w-4xl mx-auto mt-12 space-y-4">
         {top5.length === 0 && <p className="text-center text-gray-400">Sem dados de competências ainda.</p>}
@@ -288,6 +290,7 @@ function SlideGaps({ compStats }) {
       <SlideHeader
         title="Onde precisam de vocês"
         subtitle="Áreas que escolheram, mas onde se sentem fracos. Espaço para mentoria."
+        note="Não é fraqueza — é autoconsciência. Cada gap aqui identificado é uma oportunidade concreta de mentoria ou formação conjunta. O facto de a terem escolhido significa que já sabem que é importante."
       />
       <div className="max-w-4xl mx-auto mt-12 space-y-4">
         {gaps.length === 0 && <p className="text-center text-gray-400">Sem dados de competências ainda.</p>}
@@ -318,6 +321,7 @@ function SlideOlharGeracional({ h1Data, participants, anon, anonMap }) {
       <SlideHeader
         title="Como veem o vosso negócio"
         subtitle="Vejam pelos olhos da próxima geração."
+        note="Leiam com atenção — esta é a perspetiva que raramente ouvem em reuniões de família. Os jovens percebem o negócio de fora para dentro, e esse olhar é um ativo que muitas empresas familiares ignoram até ser tarde."
       />
       <QuoteGrid quotes={quotes} anon={anon} anonMap={anonMap} />
     </div>
@@ -341,6 +345,7 @@ function SlideVisaoCliente({ h1Data, h2Data, participants, anon, anonMap }) {
       <SlideHeader
         title="O que querem construir"
         subtitle="A experiência de cliente que imaginam — e as ideias que tiveram em equipa."
+        note="O cliente que imaginam é digital, exigente e confia em pessoas — não em apólices. As ideias do brainstorming mostram onde querem contribuir. Perguntem-lhes qual querem liderar."
       />
       <div className="max-w-7xl mx-auto mt-8 grid lg:grid-cols-2 gap-8">
         <div className="space-y-3">
@@ -385,6 +390,7 @@ function SlideLadoEmocional({ h1Data, participants, anon, anonMap }) {
       <SlideHeader
         title="O que sentem"
         subtitle="Entusiasmos e medos. Os dois coexistem — e isso é normal."
+        note="Não tentem eliminar os medos — tentem perceber o que os gera. A maioria está ligada a autonomia, reconhecimento e ao medo de decepcionar. Uma conversa honesta sobre isso vale mais do que qualquer formação."
       />
       <QuoteGrid quotes={quotes} anon={anon} anonMap={anonMap} />
     </div>
@@ -400,6 +406,7 @@ function SlideCompromissos({ h4Data, participants, anon, anonMap }) {
       <SlideHeader
         title="Comprometeram-se a..."
         subtitle="O futuro que querem construir, nas próprias palavras."
+        note="Estes compromissos foram escritos de forma livre, sem sugestões. São os mais honestos e os mais frágeis — precisam de acompanhamento nas semanas seguintes para não se perderem na rotina."
       />
       <QuoteGrid quotes={quotes} anon={anon} anonMap={anonMap} />
     </div>
@@ -429,6 +436,7 @@ function SlidePedidoSeniors() {
       <SlideHeader
         title="O que precisam de vocês"
         subtitle="Três pedidos concretos da próxima geração para os seniors."
+        note="Não é uma crítica — é um pedido. A próxima geração precisa de estrutura e de espaço ao mesmo tempo. O vosso papel é criar os dois — e começar esta semana, não depois da próxima convenção."
       />
       <div className="max-w-5xl mx-auto mt-12 grid md:grid-cols-3 gap-6 flex-1">
         {pedidos.map((p, i) => {
@@ -455,12 +463,17 @@ function SlidePedidoSeniors() {
 
 // ============ Helpers ============
 
-function SlideHeader({ title, subtitle }) {
+function SlideHeader({ title, subtitle, note }) {
   return (
     <div className="text-center pt-8">
       <h1 className="font-display text-5xl md:text-6xl text-alfa-blue mb-3 leading-tight">{title}</h1>
       <div className="h-1 w-20 bg-alfa-orange rounded-full mx-auto mb-4" />
       <p className="text-xl text-gray-600 max-w-3xl mx-auto">{subtitle}</p>
+      {note && (
+        <p className="mt-4 text-sm text-gray-500 max-w-2xl mx-auto bg-gray-50 border border-gray-200 rounded-lg px-5 py-3 leading-relaxed italic">
+          {note}
+        </p>
+      )}
     </div>
   )
 }

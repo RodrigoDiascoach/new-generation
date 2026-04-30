@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Save, CheckCircle2, TrendingUp, Briefcase, MessageSquare, Compass, Clock, Lock } from 'lucide-react'
+import { Loader2, Save, CheckCircle2, TrendingUp, Briefcase, MessageSquare, Compass, Clock, Lock, Info } from 'lucide-react'
 import Layout from '../components/Layout'
 import ModuleHeader from '../components/ModuleHeader'
 import { supabase } from '../lib/supabase'
@@ -123,13 +123,20 @@ export default function H4Acao() {
 
   return (
     <Layout>
-      <div className="animate-fade-in max-w-3xl">
+      <div className="animate-fade-in max-w-3xl mx-auto">
         <ModuleHeader
           label="H4 · Execução & Próximos Passos"
           title="O teu plano de ação"
           description="O que distingue um sucessor de um herdeiro é a execução. Define o teu compromisso."
           color="orange"
         />
+
+        <div className="mb-5 flex gap-3 p-4 bg-alfa-orange/5 border border-alfa-orange/20 rounded-xl">
+          <Info className="text-alfa-orange shrink-0 mt-0.5" size={18} />
+          <p className="text-sm text-navy/80 leading-relaxed">
+            Um workshop muda pouco se sair apenas em boas intenções. Aqui comprometes-te com ações concretas e prazos reais. O que escreveres aqui é a base do briefing pessoal que o Rodrigo vai partilhar com os teus pais — e do acompanhamento que vem a seguir.
+          </p>
+        </div>
 
         <div className="space-y-5">
           <div className="card border-l-4 border-l-alfa-orange">
@@ -184,10 +191,10 @@ export default function H4Acao() {
           </div>
 
           <div className="card border-l-4 border-l-alfa-blue">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
               <Compass className="text-alfa-blue" size={20} />
               <h3 className="font-display text-xl text-navy">O teu caminho</h3>
-              <span className="ml-auto text-[10px] uppercase tracking-wider bg-alfa-blue/10 text-alfa-blue px-2 py-0.5 rounded">
+              <span className="text-[10px] uppercase tracking-wider bg-alfa-blue/10 text-alfa-blue px-2 py-0.5 rounded">
                 {CAMINHO_LABELS[caminho]}
               </span>
             </div>
