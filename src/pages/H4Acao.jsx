@@ -134,7 +134,7 @@ export default function H4Acao() {
         <div className="mb-5 flex gap-3 p-4 bg-alfa-orange/5 border border-alfa-orange/20 rounded-xl">
           <Info className="text-alfa-orange shrink-0 mt-0.5" size={18} />
           <p className="text-sm text-navy/80 leading-relaxed">
-            Um workshop muda pouco se sair apenas em boas intenções. Aqui comprometes-te com ações concretas e prazos reais. O que escreveres aqui é a base do briefing pessoal que o Rodrigo vai partilhar com os teus pais — e do acompanhamento que vem a seguir.
+            Boas intenções não constroem negócios — a execução constrói. Aqui para de pensar e começas a comprometer-te. O que escreveres é a base do briefing pessoal que o Rodrigo vai partilhar com os teus pais. Sê concreto. Sê específico. Sê real.
           </p>
         </div>
 

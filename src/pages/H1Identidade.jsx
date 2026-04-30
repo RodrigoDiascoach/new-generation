@@ -180,7 +180,7 @@ export default function H1Identidade() {
         <div className="mb-6 flex gap-3 p-4 bg-alfa-blue/5 border border-alfa-blue/20 rounded-xl">
           <Info className="text-alfa-blue shrink-0 mt-0.5" size={18} />
           <p className="text-sm text-navy/80 leading-relaxed">
-            Antes de decidires o teu próximo passo, é preciso saberes de onde partes. A roda de competências revela onde te sentes forte e onde ainda tens espaço para crescer — e essa honestidade é o ponto de partida de qualquer plano que resulte.
+            Não podes construir um plano sem saberes o que tens. Esta roda é o teu espelho — mostra-te onde és forte e onde ainda tens caminho. Quanto mais honesto fores contigo, mais útil isto vai ser.
           </p>
         </div>
 

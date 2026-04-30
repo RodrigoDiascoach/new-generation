@@ -116,7 +116,7 @@ export default function H3Pitch() {
         <div className="mb-6 flex gap-3 p-4 bg-alfa-blue/5 border border-alfa-blue/20 rounded-xl">
           <Info className="text-alfa-blue shrink-0 mt-0.5" size={18} />
           <p className="text-sm text-navy/80 leading-relaxed">
-            Saber o que fazes não chega — precisas de comunicar o teu valor de forma clara para os teus pais, para clientes e para parceiros. Usa estes 4 quadrantes para preparares o que vais dizer quando subires ao palco. Não tem de ser perfeito, tem de ser verdadeiro.
+            Vais subir ao palco. E a única coisa que as pessoas vão querer saber é: quem és tu e o que propões? Usa estes 4 quadrantes para te preparares. Não tem de ser perfeito — tem de ser verdadeiro.
           </p>
         </div>
 

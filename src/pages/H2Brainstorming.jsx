@@ -120,7 +120,7 @@ export default function H2Brainstorming() {
         <div className="mb-6 flex gap-3 p-4 bg-alfa-orange/5 border border-alfa-orange/20 rounded-xl">
           <Info className="text-alfa-orange shrink-0 mt-0.5" size={18} />
           <p className="text-sm text-navy/80 leading-relaxed">
-            Os melhores produtos e serviços surgem quando pessoas com perspetivas diferentes colaboram. Começa por refletir sozinho — depois leva as tuas ideias para a equipa e vejam o que constroem juntos.
+            A tua geração vê o que os outros já não conseguem ver — isso é a tua maior vantagem. Começa por pensar sozinho. Depois leva essas ideias para a equipa. É quando perspetivas diferentes se encontram que nascem as soluções que ficam.
           </p>
         </div>
 

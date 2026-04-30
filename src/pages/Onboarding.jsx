@@ -66,7 +66,9 @@ export default function Onboarding() {
             New Generation AGEBROKERS
           </h1>
           <p className="text-lg text-gray-600">
-            Bem-vindo ao New Generation AGEBROKERS. Antes de começar, deixa os teus dados.
+            O negócio está montado. A estrutura está pronta.<br />
+            Agora falta o mais importante — tu.<br />
+            Antes de começarmos, diz-nos quem és.
           </p>
         </div>
 

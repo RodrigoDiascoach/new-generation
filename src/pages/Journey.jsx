@@ -8,7 +8,7 @@ const MODULES = [
     id: 'h1',
     label: 'H1',
     title: 'Identidade & Potencial',
-    description: 'Roda de competências, valências e o que te move.',
+    description: 'Sabe de onde partes antes de decidires para onde vais.',
     icon: Compass,
     color: 'blue',
     field: 'h1_completo',
@@ -18,7 +18,7 @@ const MODULES = [
     id: 'h2',
     label: 'H2',
     title: 'Brainstorming em Equipa',
-    description: 'Reflexão individual e ideias para tornar os seguros indispensáveis.',
+    description: 'Pensa sozinho. Cria em equipa. Muda o setor.',
     icon: Lightbulb,
     color: 'orange',
     field: 'h2_completo',
@@ -28,7 +28,7 @@ const MODULES = [
     id: 'h3',
     label: 'H3',
     title: 'Apresentação em Palco',
-    description: 'Prepara quem és e a tua proposta para apresentar ao grupo.',
+    description: 'Vais subir ao palco. Prepara o que vais dizer.',
     icon: Mic,
     color: 'blue',
     field: 'h3_completo',
@@ -38,7 +38,7 @@ const MODULES = [
     id: 'h4',
     label: 'H4',
     title: 'Plano de Ação',
-    description: 'Competências a desenvolver e o que implementar no negócio agora.',
+    description: 'Para de pensar. Começa a comprometer-te.',
     icon: Target,
     color: 'orange',
     field: 'h4_completo',
@@ -62,8 +62,8 @@ export default function Journey() {
             Olá, {participant?.nome_completo?.split(' ')[0]}
           </h1>
           <p className="text-gray-600 text-base md:text-lg max-w-2xl">
-            Quatro horas para mapear o teu potencial, criar soluções e definir o teu compromisso.
-            Podes navegar livremente entre os módulos.
+            Quatro horas que podem mudar a forma como vês o negócio da tua família — e o teu lugar nele.
+            Navega ao teu ritmo. Sê honesto. Faz o trabalho.
           </p>
 
           {/* Progress bar */}
