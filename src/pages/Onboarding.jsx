@@ -62,7 +62,7 @@ export default function Onboarding() {
               Workshop
             </span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-display text-alfa-blue mb-4">
+          <h1 className="text-3xl md:text-5xl font-display text-alfa-blue mb-4">
             New Generation AGEBROKERS
           </h1>
           <p className="text-lg text-gray-600">

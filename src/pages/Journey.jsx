@@ -8,7 +8,7 @@ const MODULES = [
     id: 'h1',
     label: 'H1',
     title: 'Identidade & Potencial',
-    description: 'Mapeamento de competências e diagnóstico de oportunidades.',
+    description: 'Roda de competências, valências e o que te move.',
     icon: Compass,
     color: 'blue',
     field: 'h1_completo',
@@ -17,8 +17,8 @@ const MODULES = [
   {
     id: 'h2',
     label: 'H2',
-    title: 'Brainstorming Ativo',
-    description: 'Em equipa, encontrem soluções para o setor.',
+    title: 'Brainstorming em Equipa',
+    description: 'Reflexão individual e ideias para tornar os seguros indispensáveis.',
     icon: Lightbulb,
     color: 'orange',
     field: 'h2_completo',
@@ -27,8 +27,8 @@ const MODULES = [
   {
     id: 'h3',
     label: 'H3',
-    title: 'Pitch Individual',
-    description: 'Valências, paixões, barreiras e propostas.',
+    title: 'Apresentação em Palco',
+    description: 'Prepara quem és e a tua proposta para apresentar ao grupo.',
     icon: Mic,
     color: 'blue',
     field: 'h3_completo',
@@ -38,7 +38,7 @@ const MODULES = [
     id: 'h4',
     label: 'H4',
     title: 'Plano de Ação',
-    description: 'Execução imediata e compromisso de liderança.',
+    description: 'Competências a desenvolver e o que implementar no negócio agora.',
     icon: Target,
     color: 'orange',
     field: 'h4_completo',
@@ -53,15 +53,15 @@ export default function Journey() {
 
   return (
     <Layout>
-      <div className="animate-fade-in">
-        <div className="mb-10">
+      <div className="animate-fade-in max-w-4xl mx-auto">
+        <div className="mb-8 md:mb-10">
           <span className="text-alfa-orange font-display text-sm uppercase tracking-wider">
             A tua jornada
           </span>
-          <h1 className="text-3xl md:text-4xl font-display text-alfa-blue mt-2 mb-3">
+          <h1 className="text-2xl md:text-4xl font-display text-alfa-blue mt-2 mb-3">
             Olá, {participant?.nome_completo?.split(' ')[0]}
           </h1>
-          <p className="text-gray-600 text-lg max-w-2xl">
+          <p className="text-gray-600 text-base md:text-lg max-w-2xl">
             Quatro horas para mapear o teu potencial, criar soluções e definir o teu compromisso.
             Podes navegar livremente entre os módulos.
           </p>

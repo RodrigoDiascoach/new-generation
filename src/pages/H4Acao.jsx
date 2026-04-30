@@ -125,9 +125,9 @@ export default function H4Acao() {
     <Layout>
       <div className="animate-fade-in max-w-3xl mx-auto">
         <ModuleHeader
-          label="H4 · Execução & Próximos Passos"
-          title="O teu plano de ação"
-          description="O que distingue um sucessor de um herdeiro é a execução. Define o teu compromisso."
+          label="H4 · Plano de Ação"
+          title="Competências e implementação"
+          description="Que competências faz sentido desenvolver? O que podes implementar no negócio da tua família agora?"
           color="orange"
         />
 
@@ -142,34 +142,34 @@ export default function H4Acao() {
           <div className="card border-l-4 border-l-alfa-orange">
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle2 className="text-alfa-orange" size={20} />
-              <h3 className="font-display text-xl text-navy">Execução imediata</h3>
+              <h3 className="font-display text-xl text-navy">O que posso implementar agora</h3>
             </div>
             <p className="text-sm text-gray-500 mb-3">
-              Que tarefas vais fazer já amanhã?
+              O que podes fazer já esta semana no negócio da tua família?
             </p>
             <textarea
               value={data.execucao_imediata}
               onChange={(e) => update('execucao_imediata', e.target.value)}
               rows={4}
               className="input-field resize-none text-sm"
-              placeholder="Ex: 1. Falar com o pai sobre criar o Instagram. 2. Listar os top 20 clientes. 3. Pesquisar 3 ferramentas de IA..."
+              placeholder="Ex: 1. Propor criar o Instagram da agência. 2. Listar os top 20 clientes para fazer follow-up. 3. Testar uma ferramenta de IA para gerir pedidos..."
             />
           </div>
 
           <div className="card border-l-4 border-l-alfa-blue">
             <div className="flex items-center gap-2 mb-1">
               <TrendingUp className="text-alfa-blue" size={20} />
-              <h3 className="font-display text-xl text-navy">Desenvolvimento — 6 meses</h3>
+              <h3 className="font-display text-xl text-navy">Competências a desenvolver</h3>
             </div>
             <p className="text-sm text-gray-500 mb-3">
-              Que competências vais aprimorar nos próximos 6 meses?
+              Que competências faz sentido desenvolveres nos próximos 6 meses para acrescentar valor ao negócio?
             </p>
             <textarea
               value={data.desenvolvimento_6m}
               onChange={(e) => update('desenvolvimento_6m', e.target.value)}
               rows={4}
               className="input-field resize-none text-sm"
-              placeholder="Ex: tirar curso de marketing digital, estudar IA aplicada a seguros, fazer formação em vendas..."
+              placeholder="Ex: marketing digital, IA aplicada a seguros, vendas consultivas, gestão de carteiras de clientes..."
             />
           </div>
 

@@ -40,9 +40,9 @@ export default function H1Identidade() {
   const [customLabel, setCustomLabel] = useState('')
   const [customDesc, setCustomDesc] = useState('')
   const [showCustomForm, setShowCustomForm] = useState(false)
+  const [valencias, setValencias] = useState('')
+  const [gostos, setGostos] = useState('')
   const [olharGeracional, setOlharGeracional] = useState('')
-  const [experienciaCliente, setExperienciaCliente] = useState('')
-  const [sucessaoEmocional, setSucessaoEmocional] = useState('')
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [recordId, setRecordId] = useState(null)
@@ -67,9 +67,9 @@ export default function H1Identidade() {
       const initialScores = {}
       comps.forEach(c => { initialScores[c.key] = c.score ?? 5 })
       setScores(initialScores)
+      setValencias(data.valencias || '')
+      setGostos(data.gostos || '')
       setOlharGeracional(data.olhar_geracional || '')
-      setExperienciaCliente(data.experiencia_cliente || '')
-      setSucessaoEmocional(data.sucessao_emocional || '')
       if (comps.length === TOTAL_REQUIRED) setPhase('rate')
     }
     setBootLoading(false)
@@ -126,9 +126,9 @@ export default function H1Identidade() {
     const payload = {
       participant_id: participantId,
       competencias,
+      valencias,
+      gostos,
       olhar_geracional: olharGeracional,
-      experiencia_cliente: experienciaCliente,
-      sucessao_emocional: sucessaoEmocional,
     }
 
     let result
@@ -172,7 +172,7 @@ export default function H1Identidade() {
           description={
             phase === 'select'
               ? `Escolhe ${TOTAL_REQUIRED} competências para te avaliares. Podes usar as sugestões ou adicionar as tuas.`
-              : 'Avalia-te de 1 a 10 em cada competência. Sê honesto — esta é a tua base de partida.'
+              : 'Avalia-te de 1 a 10 em cada competência. Depois diz-nos as tuas valências e o que te move.'
           }
           color="blue"
         />
@@ -306,6 +306,7 @@ export default function H1Identidade() {
 
         {phase === 'rate' && (
           <>
+            {/* Avaliação da roda */}
             <div className="card mb-6">
               <div className="flex items-center justify-between mb-1">
                 <h2 className="font-display text-xl text-navy">As tuas competências hoje</h2>
@@ -348,47 +349,48 @@ export default function H1Identidade() {
               </div>
             </div>
 
+            {/* Valências e Gostos */}
             <div className="card mb-6">
-              <h2 className="font-display text-xl text-navy mb-1">A tua perspetiva sobre o negócio</h2>
+              <h2 className="font-display text-xl text-navy mb-1">As tuas valências e gostos</h2>
               <div className="accent-bar mb-6" />
 
               <div className="space-y-5">
                 <div>
                   <label className="block font-semibold text-navy mb-2">
-                    Quando olhas para o negócio da tua família com olhos da tua geração, o que sentes que ele faz bem — e onde sentes que está a ficar para trás?
+                    As minhas valências — o que trago para a mesa
+                  </label>
+                  <textarea
+                    value={valencias}
+                    onChange={(e) => { setValencias(e.target.value); setSaved(false) }}
+                    rows={4}
+                    className="input-field resize-none"
+                    placeholder="O que fazes melhor que a maioria? Onde as pessoas te pedem ajuda? Pode ser tecnologia, comunicação, vendas, criatividade, organização..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-navy mb-2">
+                    O que me dá energia — o que genuinamente gosto de fazer
+                  </label>
+                  <textarea
+                    value={gostos}
+                    onChange={(e) => { setGostos(e.target.value); setSaved(false) }}
+                    rows={4}
+                    className="input-field resize-none"
+                    placeholder="Que tarefas ou projetos te fazem perder a noção do tempo? O que farias mesmo sem receber por isso?"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-navy mb-2">
+                    Quando olhas para o negócio da tua família com os teus olhos, o que sentes que está a ficar para trás?
                   </label>
                   <textarea
                     value={olharGeracional}
                     onChange={(e) => { setOlharGeracional(e.target.value); setSaved(false) }}
                     rows={4}
                     className="input-field resize-none"
-                    placeholder="Sê honesto: pode ser tecnologia, comunicação, atendimento, marca, qualquer coisa..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-navy mb-2">
-                    Imagina o teu primeiro cliente daqui a 3 anos. Como é a experiência que ele tem contigo, do primeiro contacto à entrega da apólice?
-                  </label>
-                  <textarea
-                    value={experienciaCliente}
-                    onChange={(e) => { setExperienciaCliente(e.target.value); setSaved(false) }}
-                    rows={4}
-                    className="input-field resize-none"
-                    placeholder="Conta a história em 4 ou 5 frases. O que ele sente em cada passo?"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-navy mb-2">
-                    Quando pensas no negócio onde a tua família atua, o que te entusiasma e o que te assusta?
-                  </label>
-                  <textarea
-                    value={sucessaoEmocional}
-                    onChange={(e) => { setSucessaoEmocional(e.target.value); setSaved(false) }}
-                    rows={4}
-                    className="input-field resize-none"
-                    placeholder="Não há resposta certa. As duas coisas costumam coexistir."
+                    placeholder="Pode ser tecnologia, comunicação, atendimento, marca, redes sociais... Sê honesto."
                   />
                 </div>
               </div>

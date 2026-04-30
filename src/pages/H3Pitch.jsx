@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Save, Star, Heart, Ban, Lightbulb, Info } from 'lucide-react'
+import { Loader2, Save, User, Flame, Wrench, Lightbulb, Info } from 'lucide-react'
 import Layout from '../components/Layout'
 import ModuleHeader from '../components/ModuleHeader'
 import { supabase } from '../lib/supabase'
@@ -9,35 +9,35 @@ import { useParticipant } from '../lib/ParticipantContext'
 const QUADRANTES = [
   {
     key: 'valencias',
-    icon: Star,
+    icon: User,
     color: 'blue',
-    title: 'Valências',
-    subtitle: 'O que trago para a mesa',
-    placeholder: 'Marketing, gestão, tecnologia, vendas, design... O que sabes fazer melhor que os outros?',
+    title: 'Quem sou eu',
+    subtitle: 'A tua apresentação para o palco',
+    placeholder: 'Nome, de onde vens, o que estudas ou fazes hoje, a tua ligação ao negócio familiar. Conta a tua história em 4 a 5 frases — é o que vais dizer quando te apresentares ao grupo.',
   },
   {
     key: 'o_que_gosto',
-    icon: Heart,
+    icon: Flame,
     color: 'orange',
-    title: 'O que gosto',
-    subtitle: 'Paixões profissionais',
-    placeholder: 'O que te dá energia? Que tarefas farias mesmo sem ganhar nada?',
+    title: 'O que me move',
+    subtitle: 'Paixões e motivações',
+    placeholder: 'O que te dá energia? Que projetos ou atividades te fazem esquecer as horas? O que te levaria a trabalhar mesmo sem receber?',
   },
   {
     key: 'o_que_nao_gosto',
-    icon: Ban,
+    icon: Wrench,
     color: 'blue',
-    title: 'O que não gosto',
-    subtitle: 'Barreiras e travões',
-    placeholder: 'Que processos te tiram energia? O que evitas no negócio atual?',
+    title: 'O que quero transformar',
+    subtitle: 'Oportunidades de melhoria no negócio',
+    placeholder: 'O que não está a funcionar no negócio da tua família? Que processos te parecem desatualizados? O que mudarias amanhã se pudesses?',
   },
   {
     key: 'solucoes_propostas',
     icon: Lightbulb,
     color: 'orange',
-    title: 'Soluções propostas',
-    subtitle: 'A tua proposta de melhoria',
-    placeholder: 'Como pensas usar as tuas valências — no negócio da tua família, na tua carreira, ou em ambos?',
+    title: 'A minha proposta',
+    subtitle: 'Ideia concreta para apresentar ao grupo',
+    placeholder: 'Que ideia concreta propões para acrescentar valor ao negócio? Pode ser uma ferramenta, um serviço novo, uma forma diferente de comunicar — algo que podes começar a implementar.',
   },
 ]
 
@@ -107,16 +107,16 @@ export default function H3Pitch() {
     <Layout>
       <div className="animate-fade-in max-w-4xl mx-auto">
         <ModuleHeader
-          label="H3 · Partilha & Pitch"
-          title="Os teus 4 quadrantes"
-          description="Reflete em cada área. Não tem de ser perfeito, tem de ser verdadeiro."
+          label="H3 · Apresentação em Palco"
+          title="Prepara a tua apresentação"
+          description="Vais apresentar ao grupo: quem és, o que te move, o que queres transformar e a tua proposta concreta."
           color="blue"
         />
 
         <div className="mb-6 flex gap-3 p-4 bg-alfa-blue/5 border border-alfa-blue/20 rounded-xl">
           <Info className="text-alfa-blue shrink-0 mt-0.5" size={18} />
           <p className="text-sm text-navy/80 leading-relaxed">
-            Saber o que fazes não chega — precisas de comunicar o teu valor de forma clara para os teus pais, para clientes, para parceiros. Estes 4 quadrantes ajudam-te a estruturar o que trazes, o que te move, o que te trava, e o que propões concretamente.
+            Saber o que fazes não chega — precisas de comunicar o teu valor de forma clara para os teus pais, para clientes e para parceiros. Usa estes 4 quadrantes para preparares o que vais dizer quando subires ao palco. Não tem de ser perfeito, tem de ser verdadeiro.
           </p>
         </div>
 

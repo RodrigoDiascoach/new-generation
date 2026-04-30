@@ -19,8 +19,8 @@ export default function ModuleHeader({ label, title, description, color = 'blue'
         </span>
         <div className="h-px flex-1 bg-gray-200" />
       </div>
-      <h1 className="text-3xl md:text-4xl font-display text-navy mb-3">{title}</h1>
-      <p className="text-gray-600 text-lg max-w-2xl">{description}</p>
+      <h1 className="text-2xl md:text-4xl font-display text-navy mb-3">{title}</h1>
+      <p className="text-gray-600 text-base md:text-lg max-w-2xl">{description}</p>
     </div>
   )
 }

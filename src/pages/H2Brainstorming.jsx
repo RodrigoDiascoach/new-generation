@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Plus, Trash2, Users, Info } from 'lucide-react'
+import { Loader2, Plus, Trash2, Users, Info, Save } from 'lucide-react'
 import Layout from '../components/Layout'
 import ModuleHeader from '../components/ModuleHeader'
 import { supabase } from '../lib/supabase'
@@ -24,9 +24,16 @@ export default function H2Brainstorming() {
   const [loading, setLoading] = useState(false)
   const [adding, setAdding] = useState(false)
 
+  // Reflexão individual
+  const [reflexaoId, setReflexaoId] = useState(null)
+  const [reflexao, setReflexao] = useState({ desafio: '', oportunidade: '', tendencia: '' })
+  const [savingReflexao, setSavingReflexao] = useState(false)
+  const [reflexaoSaved, setReflexaoSaved] = useState(false)
+
   useEffect(() => {
     if (!participantId) return
     loadIdeias()
+    loadReflexao()
   }, [participantId])
 
   async function loadIdeias() {
@@ -35,14 +42,38 @@ export default function H2Brainstorming() {
       .select('*')
       .eq('participant_id', participantId)
       .order('created_at', { ascending: true })
-
     setIdeias(data || [])
+  }
+
+  async function loadReflexao() {
+    const { data } = await supabase
+      .from('h2_reflexao')
+      .select('*')
+      .eq('participant_id', participantId)
+      .maybeSingle()
+    if (data) {
+      setReflexaoId(data.id)
+      setReflexao({ desafio: data.desafio || '', oportunidade: data.oportunidade || '', tendencia: data.tendencia || '' })
+    }
+  }
+
+  async function saveReflexao() {
+    setSavingReflexao(true)
+    const payload = { participant_id: participantId, ...reflexao, updated_at: new Date().toISOString() }
+    if (reflexaoId) {
+      await supabase.from('h2_reflexao').update(payload).eq('id', reflexaoId)
+    } else {
+      const { data } = await supabase.from('h2_reflexao').insert([payload]).select().single()
+      if (data) setReflexaoId(data.id)
+    }
+    setSavingReflexao(false)
+    setReflexaoSaved(true)
+    setTimeout(() => setReflexaoSaved(false), 2000)
   }
 
   async function adicionarIdeia() {
     if (!novaIdeia.titulo.trim()) return
     setAdding(true)
-
     const { data, error } = await supabase
       .from('h2_ideias_equipa')
       .insert([{
@@ -54,7 +85,6 @@ export default function H2Brainstorming() {
       }])
       .select()
       .single()
-
     if (!error && data) {
       setIdeias([...ideias, data])
       setNovaIdeia({ titulo: '', descricao: '', categoria: 'atendimento' })
@@ -71,11 +101,7 @@ export default function H2Brainstorming() {
     setLoading(true)
     await supabase
       .from('workshop_participants')
-      .update({
-        equipa_numero: equipa,
-        h2_completo: true,
-        updated_at: new Date().toISOString()
-      })
+      .update({ equipa_numero: equipa, h2_completo: true, updated_at: new Date().toISOString() })
       .eq('id', participantId)
     await refresh()
     navigate('/journey')
@@ -85,17 +111,80 @@ export default function H2Brainstorming() {
     <Layout>
       <div className="animate-fade-in max-w-4xl mx-auto">
         <ModuleHeader
-          label="H2 · Brainstorming Ativo"
+          label="H2 · Brainstorming em Equipa"
           title="Como tornar os seguros indispensáveis?"
-          description="Em equipa, encontrem soluções práticas para as novas gerações de clientes. Cada um regista as suas ideias aqui."
+          description="Primeiro reflete individualmente. Depois, em equipa, encontrem soluções práticas para as novas gerações de clientes."
           color="orange"
         />
 
         <div className="mb-6 flex gap-3 p-4 bg-alfa-orange/5 border border-alfa-orange/20 rounded-xl">
           <Info className="text-alfa-orange shrink-0 mt-0.5" size={18} />
           <p className="text-sm text-navy/80 leading-relaxed">
-            Os melhores produtos e serviços surgem quando pessoas com perspetivas diferentes colaboram. Traz o teu olhar de nova geração para encontrar soluções práticas — não em teoria, mas com ideias que podem ser implementadas já esta semana.
+            Os melhores produtos e serviços surgem quando pessoas com perspetivas diferentes colaboram. Começa por refletir sozinho — depois leva as tuas ideias para a equipa e vejam o que constroem juntos.
           </p>
+        </div>
+
+        {/* Reflexão individual */}
+        <div className="card mb-6 border-l-4 border-l-alfa-orange">
+          <h2 className="font-display text-xl text-navy mb-1">Reflexão individual</h2>
+          <p className="text-sm text-gray-500 mb-1">Responde antes de começar o brainstorming em equipa.</p>
+          <div className="accent-bar mb-5" />
+
+          <div className="space-y-5">
+            <div>
+              <label className="block font-semibold text-navy mb-2">
+                Que desafio no negócio da tua família mais te preocupa?
+              </label>
+              <textarea
+                value={reflexao.desafio}
+                onChange={e => { setReflexao({ ...reflexao, desafio: e.target.value }); setReflexaoSaved(false) }}
+                rows={3}
+                className="input-field resize-none"
+                placeholder="Ex: a captação de clientes jovens, a presença digital, o processo de atendimento..."
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-navy mb-2">
+                Onde vês a maior oportunidade de melhoria ou inovação?
+              </label>
+              <textarea
+                value={reflexao.oportunidade}
+                onChange={e => { setReflexao({ ...reflexao, oportunidade: e.target.value }); setReflexaoSaved(false) }}
+                rows={3}
+                className="input-field resize-none"
+                placeholder="Ex: automatizar o seguimento de clientes, criar conteúdo nas redes sociais, simplificar a comunicação das apólices..."
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-navy mb-2">
+                Que ferramenta, tendência ou competência da tua geração poderia ser aplicada ao negócio?
+              </label>
+              <textarea
+                value={reflexao.tendencia}
+                onChange={e => { setReflexao({ ...reflexao, tendencia: e.target.value }); setReflexaoSaved(false) }}
+                rows={3}
+                className="input-field resize-none"
+                placeholder="Ex: IA para triagem de sinistros, vídeos curtos para explicar seguros, WhatsApp para atendimento rápido..."
+              />
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={saveReflexao}
+            disabled={savingReflexao}
+            className="btn-secondary mt-5 flex items-center gap-2 text-sm"
+          >
+            {savingReflexao ? (
+              <Loader2 className="animate-spin" size={16} />
+            ) : reflexaoSaved ? (
+              <>✓ Guardado</>
+            ) : (
+              <><Save size={16} /> Guardar reflexão</>
+            )}
+          </button>
         </div>
 
         {/* Seleção de equipa */}
@@ -123,7 +212,7 @@ export default function H2Brainstorming() {
 
         {/* Adicionar ideia */}
         <div className="card mb-6">
-          <h2 className="font-display text-xl text-navy mb-1">Nova ideia</h2>
+          <h2 className="font-display text-xl text-navy mb-1">A minha ideia para a equipa</h2>
           <div className="accent-bar mb-5" />
 
           <div className="space-y-4">
@@ -181,9 +270,7 @@ export default function H2Brainstorming() {
                             {cat?.label}
                           </span>
                         </div>
-                        <h4 className="font-display text-lg text-navy mb-1">
-                          {ideia.ideia_titulo}
-                        </h4>
+                        <h4 className="font-display text-lg text-navy mb-1">{ideia.ideia_titulo}</h4>
                         {ideia.ideia_descricao && (
                           <p className="text-sm text-gray-600">{ideia.ideia_descricao}</p>
                         )}

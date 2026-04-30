@@ -40,7 +40,7 @@ export default function Layout({ children, showLogout = true }) {
         </div>
       </header>
 
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-6 md:py-8">
         {children}
       </main>
 
