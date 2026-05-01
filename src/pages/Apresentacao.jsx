@@ -346,10 +346,10 @@ function SlideOlharGeracional({ h1Data, participants, anon, anonMap }) {
   )
 }
 
-function SlideVisaoCliente({ h1Data, h2Data, participants, anon, anonMap }) {
-  const quotes = h1Data
-    .filter(h => h.experiencia_cliente?.trim())
-    .map(h => buildQuote(h.participant_id, h.experiencia_cliente, participants))
+function SlideVisaoCliente({ h1Data, h3Data, h2Data, participants, anon, anonMap }) {
+  const quotes = h3Data
+    .filter(h => h.valencias?.trim())
+    .map(h => buildQuote(h.participant_id, h.valencias, participants))
     .slice(0, 4)
   const cats = h2Data.reduce((acc, i) => {
     if (i.categoria) acc[i.categoria] = (acc[i.categoria] || 0) + 1
@@ -361,14 +361,14 @@ function SlideVisaoCliente({ h1Data, h2Data, participants, anon, anonMap }) {
   return (
     <div className="min-h-full p-12">
       <SlideHeader
-        title="O que querem construir"
-        subtitle="A experiência de cliente que imaginam — e as ideias que tiveram em equipa."
-        note="O cliente que imaginam é digital, exigente e confia em pessoas — não em apólices. As ideias do brainstorming mostram onde querem contribuir. Perguntem-lhes qual querem liderar."
+        title="Quem são e o que trazem"
+        subtitle="As valências de cada um — e as ideias que geraram em equipa."
+        note="As valências mostram o que cada um considera a sua força. Cruzem com as ideias do brainstorming — é onde há alinhamento entre o que sabem fazer e o que querem construir."
       />
       <div className="max-w-7xl mx-auto mt-8 grid lg:grid-cols-2 gap-8">
         <div className="space-y-3">
           <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">
-            Visão de cliente (a 3 anos)
+            Quem são — o que trazem para a mesa
           </div>
           {quotes.length === 0 && <p className="text-gray-400 text-sm">Sem respostas ainda.</p>}
           {quotes.map((q, i) => <QuoteCard key={i} q={q} anon={anon} anonMap={anonMap} />)}
@@ -399,18 +399,76 @@ function SlideVisaoCliente({ h1Data, h2Data, participants, anon, anonMap }) {
   )
 }
 
-function SlideLadoEmocional({ h1Data, participants, anon, anonMap }) {
-  const quotes = h1Data
-    .filter(h => h.sucessao_emocional?.trim())
-    .map(h => buildQuote(h.participant_id, h.sucessao_emocional, participants))
+function SlideLadoEmocional({ h3Data, participants, anon, anonMap }) {
+  const comMove = h3Data.filter(h => h.o_que_gosto?.trim())
+  const querMudar = h3Data.filter(h => h.o_que_nao_gosto?.trim())
+
   return (
-    <div className="min-h-full p-12">
+    <div className="min-h-full p-10">
       <SlideHeader
-        title="O que sentem"
-        subtitle="Entusiasmos e medos. Os dois coexistem — e isso é normal."
-        note="Não tentem eliminar os medos — tentem perceber o que os gera. A maioria está ligada a autonomia, reconhecimento e ao medo de decepcionar. Uma conversa honesta sobre isso vale mais do que qualquer formação."
+        title="O que os move — e o que querem mudar"
+        subtitle="Energia e frustração. As duas faces do mesmo envolvimento."
+        note="O que os move mostra onde investir atenção. O que querem mudar mostra onde há dor — e oportunidade. Escutem os dois com a mesma seriedade."
       />
-      <QuoteGrid quotes={quotes} anon={anon} anonMap={anonMap} />
+      <div className="max-w-7xl mx-auto mt-8 grid md:grid-cols-2 gap-6">
+        {/* O que os move */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-1 w-8 bg-alfa-orange rounded" />
+            <h3 className="font-display text-xl text-navy">O que os move</h3>
+            <span className="text-sm text-gray-400">({comMove.length})</span>
+          </div>
+          <div className="space-y-3">
+            {comMove.length === 0 && <p className="text-gray-400 text-sm">Sem respostas ainda.</p>}
+            {comMove.map((h, i) => {
+              const p = participants.find(pp => pp.id === h.participant_id)
+              const display = anon ? (anonMap[h.participant_id] || '—') : getTeamLabel(h.participant_id, participants)
+              return (
+                <div key={i} className="bg-orange-50 border-2 border-orange-100 rounded-xl p-4">
+                  <p className="text-sm text-gray-800 leading-relaxed mb-2">{h.o_que_gosto}</p>
+                  <div className="flex items-center gap-2">
+                    {p?.caminho && (
+                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${CAMINHO_COLORS[p.caminho]}`}>
+                        {CAMINHO_LABELS[p.caminho]}
+                      </span>
+                    )}
+                    <span className="text-xs text-gray-500">{display}</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* O que querem mudar */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-1 w-8 bg-alfa-blue rounded" />
+            <h3 className="font-display text-xl text-navy">O que querem transformar</h3>
+            <span className="text-sm text-gray-400">({querMudar.length})</span>
+          </div>
+          <div className="space-y-3">
+            {querMudar.length === 0 && <p className="text-gray-400 text-sm">Sem respostas ainda.</p>}
+            {querMudar.map((h, i) => {
+              const p = participants.find(pp => pp.id === h.participant_id)
+              const display = anon ? (anonMap[h.participant_id] || '—') : getTeamLabel(h.participant_id, participants)
+              return (
+                <div key={i} className="bg-alfa-blue/5 border-2 border-alfa-blue/10 rounded-xl p-4">
+                  <p className="text-sm text-gray-800 leading-relaxed mb-2">{h.o_que_nao_gosto}</p>
+                  <div className="flex items-center gap-2">
+                    {p?.caminho && (
+                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${CAMINHO_COLORS[p.caminho]}`}>
+                        {CAMINHO_LABELS[p.caminho]}
+                      </span>
+                    )}
+                    <span className="text-xs text-gray-500">{display}</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
