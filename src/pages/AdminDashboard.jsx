@@ -9,7 +9,7 @@ import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Responsi
 import Logo from '../components/Logo'
 import { supabase } from '../lib/supabase'
 import { isAdminAuth } from './AdminLogin'
-import { CAMINHOS, CAMINHO_LABELS, CAMINHO_COLORS, aggregateCompetencias } from '../lib/workshop-utils'
+import { CAMINHOS, CAMINHO_LABELS, CAMINHO_COLORS, aggregateCompetencias, getTeamLabel } from '../lib/workshop-utils'
 
 const STORAGE_KEY = 'agebrokers_admin_auth'
 const RADAR_TOP_N = 8
@@ -639,7 +639,7 @@ export default function AdminDashboard() {
                               {i.ideia_descricao && (
                                 <p className="text-sm text-gray-600 mb-2">{i.ideia_descricao}</p>
                               )}
-                              <p className="text-xs text-gray-400">— {part?.nome_completo}</p>
+                              <p className="text-xs text-gray-400">— {getTeamLabel(i.participant_id, activeParticipants)}</p>
                             </div>
                           )
                         })}

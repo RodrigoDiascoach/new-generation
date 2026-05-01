@@ -37,6 +37,16 @@ export function aggregateCompetencias(h1Data) {
     .sort((a, b) => b.count - a.count || b.avg - a.avg)
 }
 
+// Devolve "Ana & Tiago" para ideias de equipa, ou só o nome se não há parceiro
+export function getTeamLabel(participantId, participants) {
+  const author = participants.find(p => p.id === participantId)
+  if (!author) return '—'
+  if (!author.equipa_numero) return author.nome_completo || '—'
+  const teammates = participants.filter(p => p.equipa_numero === author.equipa_numero)
+  if (teammates.length <= 1) return author.nome_completo || '—'
+  return teammates.map(p => (p.nome_completo || '').split(' ')[0]).join(' & ')
+}
+
 // Pseudonymize: "Sucessor #1", "Independente #2"...
 export function buildAnonMap(participants) {
   const counters = {}

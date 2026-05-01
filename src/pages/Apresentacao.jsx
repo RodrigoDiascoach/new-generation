@@ -10,7 +10,7 @@ import { isAdminAuth } from './AdminLogin'
 import Logo from '../components/Logo'
 import {
   CAMINHOS, CAMINHO_LABELS, CAMINHO_COLORS,
-  aggregateCompetencias, buildAnonMap,
+  aggregateCompetencias, buildAnonMap, getTeamLabel,
 } from '../lib/workshop-utils'
 
 export default function Apresentacao() {
@@ -79,11 +79,21 @@ export default function Apresentacao() {
     )
   }
 
-  const compStats = aggregateCompetencias(h1Data)
-  const anonMap = buildAnonMap(participants)
+  const activeParticipants = participants.filter(p => p.incluir_analise !== false && !p.is_test)
+  const activeIds = new Set(activeParticipants.map(p => p.id))
+  const activeH1 = h1Data.filter(h => activeIds.has(h.participant_id))
+  const activeH2 = h2Data.filter(h => activeIds.has(h.participant_id))
+  const activeH4 = h4Data.filter(h => activeIds.has(h.participant_id))
+  const compStats = aggregateCompetencias(activeH1)
+  const anonMap = buildAnonMap(activeParticipants)
   const ctx = {
-    participants, h1Data, h2Data, h4Data, compStats,
-    anon, anonMap,
+    participants: activeParticipants,
+    h1Data: activeH1,
+    h2Data: activeH2,
+    h4Data: activeH4,
+    compStats,
+    anon,
+    anonMap,
   }
 
   function handlePrint() {
@@ -483,7 +493,7 @@ function buildQuote(participantId, text, participants) {
   return {
     participantId,
     caminho: p?.caminho || 'explorando',
-    name: p?.nome_completo || '—',
+    name: getTeamLabel(participantId, participants),
     text,
   }
 }

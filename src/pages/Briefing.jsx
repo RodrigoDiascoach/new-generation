@@ -45,6 +45,7 @@ export default function Briefing() {
   const [participant, setParticipant] = useState(null)
   const [h1, setH1] = useState(null)
   const [h2, setH2] = useState([])
+  const [teammates, setTeammates] = useState([])
   const [h3, setH3] = useState(null)
   const [h4, setH4] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -52,24 +53,34 @@ export default function Briefing() {
 
   useEffect(() => {
     if (!adminOK) return
-    Promise.all([
-      supabase.from('workshop_participants').select('*').eq('id', participantId).maybeSingle(),
-      supabase.from('h1_competencias').select('*').eq('participant_id', participantId).maybeSingle(),
-      supabase.from('h2_ideias_equipa').select('*').eq('participant_id', participantId).order('created_at'),
-      supabase.from('h3_pitch_individual').select('*').eq('participant_id', participantId).maybeSingle(),
-      supabase.from('h4_plano_acao').select('*').eq('participant_id', participantId).maybeSingle(),
-    ]).then(([p, q1, q2, q3, q4]) => {
-      if (!p.data) {
-        setNotFound(true)
+    async function load() {
+      const [p, q1, q3, q4] = await Promise.all([
+        supabase.from('workshop_participants').select('*').eq('id', participantId).maybeSingle(),
+        supabase.from('h1_competencias').select('*').eq('participant_id', participantId).maybeSingle(),
+        supabase.from('h3_pitch_individual').select('*').eq('participant_id', participantId).maybeSingle(),
+        supabase.from('h4_plano_acao').select('*').eq('participant_id', participantId).maybeSingle(),
+      ])
+      if (!p.data) { setNotFound(true); setLoading(false); return }
+      setParticipant(p.data)
+      setH1(q1.data)
+      setH3(q3.data)
+      setH4(q4.data)
+
+      // Carregar ideias da equipa inteira (não só as do participante)
+      if (p.data.equipa_numero) {
+        const [teamIdeias, teamParts] = await Promise.all([
+          supabase.from('h2_ideias_equipa').select('*').eq('equipa_numero', p.data.equipa_numero).order('created_at'),
+          supabase.from('workshop_participants').select('id, nome_completo').eq('equipa_numero', p.data.equipa_numero),
+        ])
+        setH2(teamIdeias.data || [])
+        setTeammates(teamParts.data || [])
       } else {
-        setParticipant(p.data)
-        setH1(q1.data)
+        const q2 = await supabase.from('h2_ideias_equipa').select('*').eq('participant_id', participantId).order('created_at')
         setH2(q2.data || [])
-        setH3(q3.data)
-        setH4(q4.data)
       }
       setLoading(false)
-    })
+    }
+    load()
   }, [adminOK, participantId])
 
   if (!adminOK) return <Navigate to="/admin" replace />
@@ -185,19 +196,28 @@ export default function Briefing() {
 
         {/* H2 — Ideias do brainstorming */}
         {h2.length > 0 && (
-          <Section title={`H2 · Ideias do brainstorming (${h2.length})`}>
+          <Section title={`H2 · Ideias da equipa${participant.equipa_numero ? ` ${participant.equipa_numero}` : ''} (${h2.length})`}>
+            {teammates.length > 1 && (
+              <p className="text-[10px] text-gray-400 mb-2 italic">
+                Equipa: {teammates.map(t => t.nome_completo).join(' & ')}
+              </p>
+            )}
             <div className="space-y-2">
-              {h2.map((ideia, i) => (
-                <div key={ideia.id || i} className="border-b border-gray-100 pb-2 last:border-0 last:pb-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="font-semibold text-navy text-sm">{ideia.ideia_titulo}</span>
-                    <span className="text-[10px] uppercase bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded whitespace-nowrap">{ideia.categoria}</span>
+              {h2.map((ideia, i) => {
+                const author = teammates.find(t => t.id === ideia.participant_id)
+                return (
+                  <div key={ideia.id || i} className="border-b border-gray-100 pb-2 last:border-0 last:pb-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-semibold text-navy text-sm">{ideia.ideia_titulo}</span>
+                      <span className="text-[10px] uppercase bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded whitespace-nowrap">{ideia.categoria}</span>
+                    </div>
+                    {ideia.ideia_descricao && (
+                      <p className="text-xs text-gray-600 mt-0.5 whitespace-pre-wrap">{ideia.ideia_descricao}</p>
+                    )}
+                    {author && <p className="text-[10px] text-gray-400 mt-0.5">por {author.nome_completo.split(' ')[0]}</p>}
                   </div>
-                  {ideia.ideia_descricao && (
-                    <p className="text-xs text-gray-600 mt-0.5 whitespace-pre-wrap">{ideia.ideia_descricao}</p>
-                  )}
-                </div>
-              ))}
+                )
+              })}
             </div>
           </Section>
         )}
