@@ -529,11 +529,6 @@ function SlidePedidoSeniors() {
           )
         })}
       </div>
-      <div className="text-center mt-12 max-w-3xl mx-auto">
-        <p className="text-2xl text-gray-700 italic leading-relaxed">
-          "Os negócios familiares que sobrevivem 3 gerações são aqueles em que os pais aprenderam a escutar."
-        </p>
-      </div>
     </div>
   )
 }
