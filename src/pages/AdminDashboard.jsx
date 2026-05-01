@@ -3,7 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom'
 import {
   Users, Lightbulb, CheckCircle2, Star, Download, LogOut,
   RefreshCw, Award, Heart, Ban, TrendingUp, Play, FileText, EyeOff,
-  Pencil, Trash2, X, AlertTriangle
+  Pencil, Trash2, X, AlertTriangle, Eye
 } from 'lucide-react'
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import Logo from '../components/Logo'
@@ -27,6 +27,9 @@ export default function AdminDashboard() {
   const [editParticipant, setEditParticipant] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [editIdeia, setEditIdeia] = useState(null)
+  const [deleteIdeiaConfirm, setDeleteIdeiaConfirm] = useState(null)
+  const [showHidden, setShowHidden] = useState(false)
 
   if (!isAdminAuth()) return <Navigate to="/admin" replace />
 
@@ -69,6 +72,25 @@ export default function AdminDashboard() {
     setDeleteConfirm(null)
   }
 
+  async function saveIdeia(id, fields) {
+    setSaving(true)
+    await supabase.from('h2_ideias_equipa').update(fields).eq('id', id)
+    setH2Data(prev => prev.map(i => i.id === id ? { ...i, ...fields } : i))
+    setSaving(false)
+    setEditIdeia(null)
+  }
+
+  async function toggleOculta(id, current) {
+    await supabase.from('h2_ideias_equipa').update({ oculta: !current }).eq('id', id)
+    setH2Data(prev => prev.map(i => i.id === id ? { ...i, oculta: !current } : i))
+  }
+
+  async function deleteIdeia(id) {
+    await supabase.from('h2_ideias_equipa').delete().eq('id', id)
+    setH2Data(prev => prev.filter(i => i.id !== id))
+    setDeleteIdeiaConfirm(null)
+  }
+
   async function toggleIncluir(id, current) {
     await supabase
       .from('workshop_participants')
@@ -87,6 +109,7 @@ export default function AdminDashboard() {
   const activeIds = new Set(activeParticipants.map(p => p.id))
   const activeH1 = h1Data.filter(h => activeIds.has(h.participant_id))
   const activeH2 = h2Data.filter(h => activeIds.has(h.participant_id))
+  const activeH2Visible = activeH2.filter(h => !h.oculta)
   const activeH3 = h3Data.filter(h => activeIds.has(h.participant_id))
   const activeH4 = h4Data.filter(h => activeIds.has(h.participant_id))
 
@@ -106,14 +129,14 @@ export default function AdminDashboard() {
   }))
   const caminhoSemResposta = activeParticipants.filter(p => !p.caminho).length
 
-  // Ideias por equipa
+  // Ideias por equipa (apenas visíveis)
   const ideiasPorEquipa = [1, 2, 3, 4].map(n => ({
     equipa: `Equipa ${n}`,
-    ideias: activeH2.filter(i => i.equipa_numero === n).length,
+    ideias: activeH2Visible.filter(i => i.equipa_numero === n).length,
   }))
 
-  // Categorias de ideias
-  const categoriasCount = activeH2.reduce((acc, i) => {
+  // Categorias de ideias (apenas visíveis)
+  const categoriasCount = activeH2Visible.reduce((acc, i) => {
     acc[i.categoria] = (acc[i.categoria] || 0) + 1
     return acc
   }, {})
@@ -335,7 +358,7 @@ export default function AdminDashboard() {
                 value={activeParticipants.filter(p => p.h1_completo && p.h2_completo && p.h3_completo && p.h4_completo).length}
                 color="green"
               />
-              <KPI icon={Lightbulb} label="Ideias geradas" value={activeH2.length} color="orange" />
+              <KPI icon={Lightbulb} label="Ideias geradas" value={activeH2Visible.length} color="orange" />
               <KPI icon={Star} label="Rating médio" value={ratingMedio} color="blue" suffix="/10" />
             </div>
 
@@ -345,7 +368,7 @@ export default function AdminDashboard() {
                 { id: 'overview', label: 'Visão geral' },
                 { id: 'participants', label: `Participantes (${activeParticipants.length}${excludedCount > 0 ? `+${excludedCount}` : ''})` },
                 { id: 'h1', label: 'H1 · Competências' },
-                { id: 'h2', label: `H2 · Ideias (${activeH2.length})` },
+                { id: 'h2', label: `H2 · Ideias (${activeH2Visible.length}${activeH2.length > activeH2Visible.length ? `+${activeH2.length - activeH2Visible.length}` : ''})` },
                 { id: 'h3', label: 'H3 · Pitches' },
                 { id: 'h4', label: 'H4 · Plano de ação' },
               ].map(tab => (
@@ -618,31 +641,89 @@ export default function AdminDashboard() {
 
             {activeTab === 'h2' && (
               <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-gray-500">
+                    {activeH2.filter(i => !i.oculta).length} ideias visíveis
+                    {activeH2.filter(i => i.oculta).length > 0 && ` · ${activeH2.filter(i => i.oculta).length} ocultas`}
+                  </p>
+                  {activeH2.some(i => i.oculta) && (
+                    <button
+                      onClick={() => setShowHidden(h => !h)}
+                      className="text-xs font-semibold text-gray-500 hover:text-navy flex items-center gap-1"
+                    >
+                      {showHidden ? <EyeOff size={14} /> : <Eye size={14} />}
+                      {showHidden ? 'Esconder ocultas' : 'Mostrar ocultas'}
+                    </button>
+                  )}
+                </div>
                 {[1, 2, 3, 4].map(eqNum => {
-                  const ideias = activeH2.filter(i => i.equipa_numero === eqNum)
-                  if (ideias.length === 0) return null
+                  const todas = activeH2.filter(i => i.equipa_numero === eqNum)
+                  const visiveis = todas.filter(i => !i.oculta)
+                  const ocultas = todas.filter(i => i.oculta)
+                  const mostrar = showHidden ? todas : visiveis
+                  if (mostrar.length === 0 && ocultas.length === 0) return null
+                  if (mostrar.length === 0 && !showHidden) return null
                   return (
                     <div key={eqNum} className="card">
-                      <h3 className="font-display text-xl text-navy mb-1">Equipa {eqNum}</h3>
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className="font-display text-xl text-navy">Equipa {eqNum}</h3>
+                        {ocultas.length > 0 && (
+                          <span className="text-xs text-gray-400">{ocultas.length} oculta{ocultas.length > 1 ? 's' : ''}</span>
+                        )}
+                      </div>
                       <div className="accent-bar mb-4" />
                       <div className="space-y-3">
-                        {ideias.map(i => {
-                          const part = activeParticipants.find(p => p.id === i.participant_id)
-                          return (
-                            <div key={i.id} className="bg-gray-50 p-4 rounded-lg border-l-4 border-alfa-orange">
-                              <div className="flex items-start justify-between mb-1">
-                                <h4 className="font-semibold text-navy">{i.ideia_titulo}</h4>
-                                <span className="text-xs bg-white px-2 py-1 rounded text-alfa-orange capitalize">
+                        {mostrar.map(i => (
+                          <div
+                            key={i.id}
+                            className={`p-4 rounded-lg border-l-4 transition-opacity ${
+                              i.oculta
+                                ? 'bg-gray-50 border-l-gray-300 opacity-50'
+                                : 'bg-gray-50 border-l-alfa-orange'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h4 className="font-semibold text-navy">{i.ideia_titulo}</h4>
+                                  {i.oculta && (
+                                    <span className="text-[10px] uppercase bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded">oculta</span>
+                                  )}
+                                </div>
+                                {i.ideia_descricao && (
+                                  <p className="text-sm text-gray-600 mt-1">{i.ideia_descricao}</p>
+                                )}
+                                <p className="text-xs text-gray-400 mt-1">— {getTeamLabel(i.participant_id, activeParticipants)}</p>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <span className="text-xs bg-white px-2 py-1 rounded text-alfa-orange capitalize border border-orange-100">
                                   {i.categoria}
                                 </span>
+                                <button
+                                  onClick={() => toggleOculta(i.id, !!i.oculta)}
+                                  title={i.oculta ? 'Mostrar ideia' : 'Ocultar ideia'}
+                                  className="p-1.5 text-gray-400 hover:text-navy rounded transition-colors"
+                                >
+                                  {i.oculta ? <Eye size={14} /> : <EyeOff size={14} />}
+                                </button>
+                                <button
+                                  onClick={() => setEditIdeia(i)}
+                                  title="Editar"
+                                  className="p-1.5 text-gray-400 hover:text-alfa-blue rounded transition-colors"
+                                >
+                                  <Pencil size={14} />
+                                </button>
+                                <button
+                                  onClick={() => setDeleteIdeiaConfirm(i)}
+                                  title="Eliminar"
+                                  className="p-1.5 text-gray-400 hover:text-red-600 rounded transition-colors"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
                               </div>
-                              {i.ideia_descricao && (
-                                <p className="text-sm text-gray-600 mb-2">{i.ideia_descricao}</p>
-                              )}
-                              <p className="text-xs text-gray-400">— {getTeamLabel(i.participant_id, activeParticipants)}</p>
                             </div>
-                          )
-                        })}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )
@@ -743,6 +824,21 @@ export default function AdminDashboard() {
           onClose={() => setDeleteConfirm(null)}
         />
       )}
+      {editIdeia && (
+        <EditIdeiaModal
+          ideia={editIdeia}
+          onSave={saveIdeia}
+          onClose={() => setEditIdeia(null)}
+          saving={saving}
+        />
+      )}
+      {deleteIdeiaConfirm && (
+        <DeleteIdeiaModal
+          ideia={deleteIdeiaConfirm}
+          onConfirm={deleteIdeia}
+          onClose={() => setDeleteIdeiaConfirm(null)}
+        />
+      )}
     </div>
   )
 }
@@ -841,6 +937,81 @@ function DeleteModal({ participant, onConfirm, onClose }) {
               onClick={() => onConfirm(participant.id)}
               className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
             >
+              Eliminar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const CATEGORIAS = [
+  { value: 'atendimento', label: 'Atendimento ao cliente' },
+  { value: 'automacao', label: 'Automação e IA' },
+  { value: 'produto', label: 'Novo produto / serviço' },
+  { value: 'marketing', label: 'Marketing e captação' },
+  { value: 'gestao', label: 'Gestão interna' },
+  { value: 'outro', label: 'Outro' },
+]
+
+function EditIdeiaModal({ ideia, onSave, onClose, saving }) {
+  const [form, setForm] = useState({
+    ideia_titulo: ideia.ideia_titulo || '',
+    ideia_descricao: ideia.ideia_descricao || '',
+    categoria: ideia.categoria || 'atendimento',
+  })
+  function set(key, val) { setForm(f => ({ ...f, [key]: val })) }
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <h2 className="font-display text-xl text-navy">Editar ideia</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Título</label>
+            <input type="text" value={form.ideia_titulo} onChange={e => set('ideia_titulo', e.target.value)} className="input-field text-sm" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Descrição</label>
+            <textarea value={form.ideia_descricao} onChange={e => set('ideia_descricao', e.target.value)} rows={3} className="input-field resize-none text-sm" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Categoria</label>
+            <select value={form.categoria} onChange={e => set('categoria', e.target.value)} className="input-field text-sm">
+              {CATEGORIAS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="flex gap-3 p-5 border-t border-gray-100">
+          <button onClick={onClose} className="btn-secondary flex-1 text-sm">Cancelar</button>
+          <button onClick={() => onSave(ideia.id, form)} disabled={saving} className="btn-primary flex-1 text-sm">
+            {saving ? 'A guardar...' : 'Guardar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DeleteIdeiaModal({ ideia, onConfirm, onClose }) {
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+        <div className="p-6 text-center">
+          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="text-red-600" size={24} />
+          </div>
+          <h2 className="font-display text-xl text-navy mb-2">Eliminar ideia?</h2>
+          <p className="text-gray-600 text-sm mb-1">
+            "<strong>{ideia.ideia_titulo}</strong>"
+          </p>
+          <p className="text-xs text-gray-400 mb-6">Esta ação é irreversível. Se só queres escondê-la, usa o botão ocultar.</p>
+          <div className="flex gap-3">
+            <button onClick={onClose} className="btn-secondary flex-1">Cancelar</button>
+            <button onClick={() => onConfirm(ideia.id)} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
               Eliminar
             </button>
           </div>

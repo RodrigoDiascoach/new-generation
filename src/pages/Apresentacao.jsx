@@ -82,7 +82,7 @@ export default function Apresentacao() {
   const activeParticipants = participants.filter(p => p.incluir_analise !== false && !p.is_test)
   const activeIds = new Set(activeParticipants.map(p => p.id))
   const activeH1 = h1Data.filter(h => activeIds.has(h.participant_id))
-  const activeH2 = h2Data.filter(h => activeIds.has(h.participant_id))
+  const activeH2 = h2Data.filter(h => activeIds.has(h.participant_id) && !h.oculta)
   const activeH4 = h4Data.filter(h => activeIds.has(h.participant_id))
   const compStats = aggregateCompetencias(activeH1)
   const anonMap = buildAnonMap(activeParticipants)

@@ -69,13 +69,13 @@ export default function Briefing() {
       // Carregar ideias da equipa inteira (não só as do participante)
       if (p.data.equipa_numero) {
         const [teamIdeias, teamParts] = await Promise.all([
-          supabase.from('h2_ideias_equipa').select('*').eq('equipa_numero', p.data.equipa_numero).order('created_at'),
+          supabase.from('h2_ideias_equipa').select('*').eq('equipa_numero', p.data.equipa_numero).eq('oculta', false).order('created_at'),
           supabase.from('workshop_participants').select('id, nome_completo').eq('equipa_numero', p.data.equipa_numero),
         ])
         setH2(teamIdeias.data || [])
         setTeammates(teamParts.data || [])
       } else {
-        const q2 = await supabase.from('h2_ideias_equipa').select('*').eq('participant_id', participantId).order('created_at')
+        const q2 = await supabase.from('h2_ideias_equipa').select('*').eq('participant_id', participantId).eq('oculta', false).order('created_at')
         setH2(q2.data || [])
       }
       setLoading(false)
