@@ -19,6 +19,7 @@ export default function Apresentacao() {
   const [participants, setParticipants] = useState([])
   const [h1Data, setH1Data] = useState([])
   const [h2Data, setH2Data] = useState([])
+  const [h3Data, setH3Data] = useState([])
   const [h4Data, setH4Data] = useState([])
   const [loading, setLoading] = useState(true)
   const [slideIdx, setSlideIdx] = useState(0)
@@ -31,11 +32,13 @@ export default function Apresentacao() {
       supabase.from('workshop_participants').select('*').order('created_at'),
       supabase.from('h1_competencias').select('*'),
       supabase.from('h2_ideias_equipa').select('*'),
+      supabase.from('h3_pitch_individual').select('*'),
       supabase.from('h4_plano_acao').select('*'),
-    ]).then(([p, h1, h2, h4]) => {
+    ]).then(([p, h1, h2, h3, h4]) => {
       setParticipants(p.data || [])
       setH1Data(h1.data || [])
       setH2Data(h2.data || [])
+      setH3Data(h3.data || [])
       setH4Data(h4.data || [])
       setLoading(false)
     })
@@ -48,6 +51,9 @@ export default function Apresentacao() {
     SlideGaps,
     SlideOlharGeracional,
     SlideVisaoCliente,
+    SlideIdeiasPorCategoria,
+    SlidePropostasConcretas,
+    SlideImplementacaoImediata,
     SlideLadoEmocional,
     SlideCompromissos,
     SlidePedidoSeniors,
@@ -83,6 +89,7 @@ export default function Apresentacao() {
   const activeIds = new Set(activeParticipants.map(p => p.id))
   const activeH1 = h1Data.filter(h => activeIds.has(h.participant_id))
   const activeH2 = h2Data.filter(h => activeIds.has(h.participant_id) && !h.oculta)
+  const activeH3 = h3Data.filter(h => activeIds.has(h.participant_id))
   const activeH4 = h4Data.filter(h => activeIds.has(h.participant_id))
   const compStats = aggregateCompetencias(activeH1)
   const anonMap = buildAnonMap(activeParticipants)
@@ -90,6 +97,7 @@ export default function Apresentacao() {
     participants: activeParticipants,
     h1Data: activeH1,
     h2Data: activeH2,
+    h3Data: activeH3,
     h4Data: activeH4,
     compStats,
     anon,
@@ -466,6 +474,185 @@ function SlidePedidoSeniors() {
         <p className="text-2xl text-gray-700 italic leading-relaxed">
           "Os negócios familiares que sobrevivem 3 gerações são aqueles em que os pais aprenderam a escutar."
         </p>
+      </div>
+    </div>
+  )
+}
+
+const CATEGORIAS_LABELS = {
+  atendimento: 'Atendimento ao cliente',
+  automacao: 'Automação e IA',
+  produto: 'Novo produto / serviço',
+  marketing: 'Marketing e captação',
+  gestao: 'Gestão interna',
+  outro: 'Outro',
+}
+
+const CATEGORIAS_ORDER = ['marketing', 'automacao', 'atendimento', 'produto', 'gestao', 'outro']
+
+function SlideIdeiasPorCategoria({ h2Data, participants, anon, anonMap }) {
+  const porCategoria = CATEGORIAS_ORDER
+    .map(cat => ({
+      cat,
+      label: CATEGORIAS_LABELS[cat] || cat,
+      ideias: h2Data.filter(i => i.categoria === cat),
+    }))
+    .filter(g => g.ideias.length > 0)
+
+  return (
+    <div className="min-h-full p-10">
+      <SlideHeader
+        title="As ideias que geraram"
+        subtitle={`${h2Data.length} ideias organizadas por tema — prontas para debater.`}
+        note="Cada ideia aqui representa um problema que identificaram ou uma oportunidade que querem explorar. Escolham 2 a 3 para aprofundar em equipa com os líderes."
+      />
+      <div className="max-w-7xl mx-auto mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {porCategoria.map(({ cat, label, ideias }) => (
+          <div key={cat} className="bg-white border-2 border-gray-100 rounded-2xl p-5 flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-display text-lg text-navy">{label}</h3>
+              <span className="font-display text-2xl text-alfa-orange tabular-nums">{ideias.length}</span>
+            </div>
+            <div className="h-0.5 w-12 bg-alfa-orange rounded mb-3" />
+            <div className="space-y-3 flex-1">
+              {ideias.map(i => {
+                const label = anon
+                  ? (anonMap[i.participant_id] || '—')
+                  : getTeamLabel(i.participant_id, participants)
+                return (
+                  <div key={i.id} className="border-b border-gray-50 pb-2 last:border-0 last:pb-0">
+                    <p className="text-sm font-semibold text-navy leading-snug">{i.ideia_titulo}</p>
+                    {i.ideia_descricao && (
+                      <p className="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">{i.ideia_descricao}</p>
+                    )}
+                    <p className="text-[10px] text-gray-400 mt-0.5">{label}</p>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function SlidePropostasConcretas({ h3Data, participants, anon, anonMap }) {
+  const propostas = h3Data
+    .filter(h => h.solucoes_propostas?.trim())
+    .map(h => ({
+      ...buildQuote(h.participant_id, h.solucoes_propostas, participants),
+      valencias: h.valencias,
+      o_que_nao_gosto: h.o_que_nao_gosto,
+    }))
+
+  return (
+    <div className="min-h-full p-10">
+      <SlideHeader
+        title="O que cada um propõe"
+        subtitle="Propostas concretas para o negócio — nas palavras deles."
+        note="Estas propostas saíram do H3 — cada um preparou uma ideia concreta para subir ao palco. São o ponto de partida para conversas sobre quem lidera o quê."
+      />
+      <div className="max-w-7xl mx-auto mt-8 grid md:grid-cols-2 gap-4">
+        {propostas.length === 0 && <p className="text-gray-400 col-span-2 text-center">Sem propostas submetidas ainda.</p>}
+        {propostas.map((q, i) => {
+          const display = anon ? (anonMap[q.participantId] || '—') : q.name
+          return (
+            <div key={i} className="bg-white border-2 border-gray-100 rounded-xl p-5">
+              <div className="flex items-start justify-between mb-3 gap-2">
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${CAMINHO_COLORS[q.caminho]}`}>
+                  {CAMINHO_LABELS[q.caminho]}
+                </span>
+                <span className="text-sm font-semibold text-navy truncate">{display}</span>
+              </div>
+              {q.o_que_nao_gosto?.trim() && (
+                <div className="mb-2">
+                  <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-0.5">O que quer transformar</div>
+                  <p className="text-xs text-gray-600 leading-snug">{q.o_que_nao_gosto}</p>
+                </div>
+              )}
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-alfa-orange font-semibold mb-0.5">A proposta</div>
+                <p className="text-sm text-gray-800 leading-relaxed">{q.text}</p>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function SlideImplementacaoImediata({ h4Data, participants, anon, anonMap }) {
+  const acoes = h4Data
+    .filter(h => h.execucao_imediata?.trim() || h.desenvolvimento_6m?.trim())
+
+  const prazoStats = ['3m', '6m', '12m', '24m', '+24m', 'nao_sei'].map(v => ({
+    label: { '3m': '3 meses', '6m': '6 meses', '12m': '12 meses', '24m': '24 meses', '+24m': '+2 anos', 'nao_sei': 'A definir' }[v],
+    count: h4Data.filter(h => h.prazo_pronto === v).length,
+  })).filter(s => s.count > 0)
+
+  return (
+    <div className="min-h-full p-10">
+      <SlideHeader
+        title="O que começa esta semana"
+        subtitle="Comprometeram-se. Em público. Com prazo."
+        note="Cada linha aqui é um compromisso voluntário — não foi sugerido, foi escolhido. O acompanhamento nas próximas semanas é o que converte intenção em resultado."
+      />
+      <div className="max-w-7xl mx-auto mt-6 grid lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-3">
+          {acoes.length === 0 && <p className="text-gray-400">Sem respostas ainda.</p>}
+          {acoes.map(h => {
+            const p = participants.find(pp => pp.id === h.participant_id)
+            const display = anon ? (anonMap[h.participant_id] || '—') : getTeamLabel(h.participant_id, participants)
+            return (
+              <div key={h.id} className="bg-white border-2 border-gray-100 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <span className="text-sm font-bold text-navy">{display}</span>
+                  {p?.caminho && (
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${CAMINHO_COLORS[p.caminho]}`}>
+                      {CAMINHO_LABELS[p.caminho]}
+                    </span>
+                  )}
+                </div>
+                {h.execucao_imediata?.trim() && (
+                  <div className="mb-2">
+                    <div className="text-[10px] uppercase tracking-wider text-alfa-orange font-semibold mb-0.5">Esta semana</div>
+                    <p className="text-sm text-gray-700 leading-snug whitespace-pre-line">{h.execucao_imediata}</p>
+                  </div>
+                )}
+                {h.desenvolvimento_6m?.trim() && (
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider text-alfa-blue font-semibold mb-0.5">Próximos 6 meses</div>
+                    <p className="text-sm text-gray-600 leading-snug whitespace-pre-line">{h.desenvolvimento_6m}</p>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+        <div className="space-y-4">
+          <div className="bg-alfa-blue/5 border-2 border-alfa-blue/20 rounded-2xl p-5">
+            <h3 className="font-display text-lg text-navy mb-3">Quando se sentem prontos</h3>
+            <div className="space-y-2">
+              {prazoStats.map(s => (
+                <div key={s.label} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">{s.label}</span>
+                  <span className="font-display text-xl text-alfa-blue tabular-nums">{s.count}</span>
+                </div>
+              ))}
+              {prazoStats.length === 0 && <p className="text-sm text-gray-400">Sem respostas ainda.</p>}
+            </div>
+          </div>
+          {h4Data.length > 0 && (
+            <div className="bg-alfa-orange/5 border-2 border-alfa-orange/20 rounded-2xl p-5 text-center">
+              <div className="font-display text-5xl text-alfa-orange tabular-nums">
+                {(h4Data.reduce((s, h) => s + (h.rating_workshop || 0), 0) / h4Data.length).toFixed(1)}
+              </div>
+              <div className="text-sm text-gray-600 mt-1">Avaliação média do workshop</div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
