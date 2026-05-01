@@ -56,6 +56,7 @@ export default function Apresentacao() {
     SlideImplementacaoImediata,
     SlideLadoEmocional,
     SlideCompromissos,
+    SlideResumoGeral,
     SlidePedidoSeniors,
   ]
   const total = slides.length
@@ -710,6 +711,131 @@ function SlideImplementacaoImediata({ h4Data, participants, anon, anonMap }) {
               <div className="text-sm text-gray-600 mt-1">Avaliação média do workshop</div>
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SlideResumoGeral({ participants, h2Data, h3Data, h4Data, compStats, anon, anonMap }) {
+  const totalIdeias = h2Data.length
+  const totalPropostas = h3Data.filter(h => h.solucoes_propostas?.trim()).length
+  const totalAcoes = h4Data.filter(h => h.execucao_imediata?.trim()).length
+  const ratingMedio = h4Data.length > 0
+    ? (h4Data.reduce((s, h) => s + (h.rating_workshop || 0), 0) / h4Data.length).toFixed(1)
+    : '—'
+
+  // Top 3 competências
+  const top3comp = compStats.slice(0, 3)
+
+  // Ideias por categoria — top 3 categorias
+  const catCount = h2Data.reduce((acc, i) => {
+    if (i.categoria) acc[i.categoria] = (acc[i.categoria] || 0) + 1
+    return acc
+  }, {})
+  const topCats = Object.entries(catCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([cat, count]) => ({ label: CATEGORIAS_LABELS[cat] || cat, count }))
+
+  // Propostas concretas — lista compacta
+  const propostas = h3Data
+    .filter(h => h.solucoes_propostas?.trim())
+    .map(h => {
+      const p = participants.find(pp => pp.id === h.participant_id)
+      return {
+        nome: anon ? (anonMap[h.participant_id] || '—') : (p?.nome_completo?.split(' ')[0] || '—'),
+        proposta: h.solucoes_propostas,
+      }
+    })
+
+  // Ações imediatas — lista compacta
+  const acoes = h4Data
+    .filter(h => h.execucao_imediata?.trim())
+    .map(h => {
+      const p = participants.find(pp => pp.id === h.participant_id)
+      return {
+        nome: anon ? (anonMap[h.participant_id] || '—') : (p?.nome_completo?.split(' ')[0] || '—'),
+        acao: h.execucao_imediata,
+      }
+    })
+
+  return (
+    <div className="min-h-full p-10">
+      <SlideHeader
+        title="O que ficou desta sessão"
+        subtitle="Números, temas e compromissos — o resumo executivo do dia."
+        note="Este slide resume tudo o que foi produzido. Partilhem-no com quem não esteve presente e usem-no como ponto de partida para as conversas das próximas semanas."
+      />
+
+      {/* KPIs */}
+      <div className="max-w-6xl mx-auto mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {[
+          { label: 'Participantes', value: participants.length, color: 'text-alfa-blue', bg: 'bg-alfa-blue/5 border-alfa-blue/20' },
+          { label: 'Ideias geradas', value: totalIdeias, color: 'text-alfa-orange', bg: 'bg-alfa-orange/5 border-alfa-orange/20' },
+          { label: 'Propostas concretas', value: totalPropostas, color: 'text-alfa-blue', bg: 'bg-alfa-blue/5 border-alfa-blue/20' },
+          { label: 'Avaliação média', value: `${ratingMedio}/10`, color: 'text-alfa-orange', bg: 'bg-alfa-orange/5 border-alfa-orange/20' },
+        ].map(k => (
+          <div key={k.label} className={`rounded-2xl border-2 p-4 text-center ${k.bg}`}>
+            <div className={`font-display text-4xl tabular-nums ${k.color}`}>{k.value}</div>
+            <div className="text-sm text-gray-600 mt-1">{k.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-6">
+        {/* Temas mais fortes */}
+        <div className="bg-white border-2 border-gray-100 rounded-2xl p-5">
+          <h3 className="font-display text-lg text-navy mb-1">Temas mais trabalhados</h3>
+          <div className="h-0.5 w-10 bg-alfa-orange rounded mb-4" />
+          <div className="space-y-3 mb-4">
+            {topCats.map(c => (
+              <div key={c.label} className="flex items-center justify-between">
+                <span className="text-sm text-gray-700">{c.label}</span>
+                <span className="font-display text-xl text-alfa-orange tabular-nums">{c.count}</span>
+              </div>
+            ))}
+          </div>
+          <div className="h-px bg-gray-100 my-3" />
+          <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Competências destaque</h4>
+          <div className="space-y-1">
+            {top3comp.map(c => (
+              <div key={c.label} className="flex items-center justify-between">
+                <span className="text-sm text-gray-700">{c.label}</span>
+                <span className="font-display text-lg text-alfa-blue tabular-nums">{c.avg}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Propostas */}
+        <div className="bg-white border-2 border-gray-100 rounded-2xl p-5">
+          <h3 className="font-display text-lg text-navy mb-1">O que cada um propõe</h3>
+          <div className="h-0.5 w-10 bg-alfa-blue rounded mb-4" />
+          <div className="space-y-3">
+            {propostas.length === 0 && <p className="text-gray-400 text-sm">Sem propostas ainda.</p>}
+            {propostas.map((p, i) => (
+              <div key={i} className="border-b border-gray-50 pb-3 last:border-0 last:pb-0">
+                <div className="text-xs font-semibold text-alfa-blue mb-0.5">{p.nome}</div>
+                <p className="text-sm text-gray-700 leading-snug">{p.proposta}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Ações imediatas */}
+        <div className="bg-white border-2 border-gray-100 rounded-2xl p-5">
+          <h3 className="font-display text-lg text-navy mb-1">O que começa esta semana</h3>
+          <div className="h-0.5 w-10 bg-alfa-orange rounded mb-4" />
+          <div className="space-y-3">
+            {acoes.length === 0 && <p className="text-gray-400 text-sm">Sem ações ainda.</p>}
+            {acoes.map((a, i) => (
+              <div key={i} className="border-b border-gray-50 pb-3 last:border-0 last:pb-0">
+                <div className="text-xs font-semibold text-alfa-orange mb-0.5">{a.nome}</div>
+                <p className="text-sm text-gray-700 leading-snug whitespace-pre-line">{a.acao}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
