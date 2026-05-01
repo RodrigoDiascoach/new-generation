@@ -581,7 +581,7 @@ function SlideIdeiasPorCategoria({ h2Data, participants, anon, anonMap }) {
                   <div key={i.id} className="border-b border-gray-50 pb-2 last:border-0 last:pb-0">
                     <p className="text-sm font-semibold text-navy leading-snug">{i.ideia_titulo}</p>
                     {i.ideia_descricao && (
-                      <p className="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">{i.ideia_descricao}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 leading-snug">{i.ideia_descricao}</p>
                     )}
                     <p className="text-[10px] text-gray-400 mt-0.5">{label}</p>
                   </div>
@@ -621,7 +621,7 @@ function SlidePropostasConcretas({ h3Data, participants, anon, anonMap }) {
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${CAMINHO_COLORS[q.caminho]}`}>
                   {CAMINHO_LABELS[q.caminho]}
                 </span>
-                <span className="text-sm font-semibold text-navy truncate">{display}</span>
+                <span className="text-sm font-semibold text-navy">{display}</span>
               </div>
               {q.o_que_nao_gosto?.trim() && (
                 <div className="mb-2">
