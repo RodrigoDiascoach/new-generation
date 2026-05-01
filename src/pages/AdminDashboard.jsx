@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import {
   Users, Lightbulb, CheckCircle2, Star, Download, LogOut,
-  RefreshCw, Award, Heart, Ban, TrendingUp, Play, FileText
+  RefreshCw, Award, Heart, Ban, TrendingUp, Play, FileText, EyeOff,
+  Pencil, Trash2, X, AlertTriangle
 } from 'lucide-react'
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import Logo from '../components/Logo'
@@ -11,7 +12,6 @@ import { isAdminAuth } from './AdminLogin'
 import { CAMINHOS, CAMINHO_LABELS, CAMINHO_COLORS, aggregateCompetencias } from '../lib/workshop-utils'
 
 const STORAGE_KEY = 'agebrokers_admin_auth'
-
 const RADAR_TOP_N = 8
 
 export default function AdminDashboard() {
@@ -24,6 +24,9 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
   const [exportOpen, setExportOpen] = useState(false)
+  const [editParticipant, setEditParticipant] = useState(null)
+  const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [saving, setSaving] = useState(false)
 
   if (!isAdminAuth()) return <Navigate to="/admin" replace />
 
@@ -48,13 +51,47 @@ export default function AdminDashboard() {
     setLoading(false)
   }
 
+  async function saveEdit(id, fields) {
+    setSaving(true)
+    await supabase.from('workshop_participants').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', id)
+    setParticipants(prev => prev.map(p => p.id === id ? { ...p, ...fields } : p))
+    setSaving(false)
+    setEditParticipant(null)
+  }
+
+  async function deleteParticipant(id) {
+    await supabase.from('workshop_participants').delete().eq('id', id)
+    setParticipants(prev => prev.filter(p => p.id !== id))
+    setH1Data(prev => prev.filter(h => h.participant_id !== id))
+    setH2Data(prev => prev.filter(h => h.participant_id !== id))
+    setH3Data(prev => prev.filter(h => h.participant_id !== id))
+    setH4Data(prev => prev.filter(h => h.participant_id !== id))
+    setDeleteConfirm(null)
+  }
+
+  async function toggleIncluir(id, current) {
+    await supabase
+      .from('workshop_participants')
+      .update({ incluir_analise: !current })
+      .eq('id', id)
+    setParticipants(prev => prev.map(p => p.id === id ? { ...p, incluir_analise: !current } : p))
+  }
+
   function logout() {
     localStorage.removeItem(STORAGE_KEY)
     navigate('/admin')
   }
 
-  // Agregação das competências (escolhidas por participante)
-  const compStats = aggregateCompetencias(h1Data)
+  // Participantes ativos nas análises (excluídos: is_test ou incluir_analise=false)
+  const activeParticipants = participants.filter(p => p.incluir_analise !== false && !p.is_test)
+  const activeIds = new Set(activeParticipants.map(p => p.id))
+  const activeH1 = h1Data.filter(h => activeIds.has(h.participant_id))
+  const activeH2 = h2Data.filter(h => activeIds.has(h.participant_id))
+  const activeH3 = h3Data.filter(h => activeIds.has(h.participant_id))
+  const activeH4 = h4Data.filter(h => activeIds.has(h.participant_id))
+
+  // Agregação das competências
+  const compStats = aggregateCompetencias(activeH1)
   const avgCompetencias = compStats.slice(0, RADAR_TOP_N).map(s => ({
     competencia: s.label,
     media: s.avg,
@@ -65,38 +102,37 @@ export default function AdminDashboard() {
   const caminhoStats = CAMINHOS.map(c => ({
     caminho: c,
     label: CAMINHO_LABELS[c],
-    count: participants.filter(p => p.caminho === c).length,
+    count: activeParticipants.filter(p => p.caminho === c).length,
   }))
-  const caminhoSemResposta = participants.filter(p => !p.caminho).length
+  const caminhoSemResposta = activeParticipants.filter(p => !p.caminho).length
 
   // Ideias por equipa
   const ideiasPorEquipa = [1, 2, 3, 4].map(n => ({
     equipa: `Equipa ${n}`,
-    ideias: h2Data.filter(i => i.equipa_numero === n).length,
+    ideias: activeH2.filter(i => i.equipa_numero === n).length,
   }))
 
   // Categorias de ideias
-  const categoriasCount = h2Data.reduce((acc, i) => {
+  const categoriasCount = activeH2.reduce((acc, i) => {
     acc[i.categoria] = (acc[i.categoria] || 0) + 1
     return acc
   }, {})
 
   // Rating médio
-  const ratingMedio = h4Data.length > 0
-    ? (h4Data.reduce((s, h) => s + (h.rating_workshop || 0), 0) / h4Data.length).toFixed(1)
+  const ratingMedio = activeH4.length > 0
+    ? (activeH4.reduce((s, h) => s + (h.rating_workshop || 0), 0) / activeH4.length).toFixed(1)
     : 0
 
-  // Export JSON (raw backup)
   function exportJSON() {
     const exportObj = {
       generated_at: new Date().toISOString(),
       workshop: 'New Generation AGEBROKERS',
-      total_participants: participants.length,
-      participants,
-      h1_competencias: h1Data,
-      h2_ideias: h2Data,
-      h3_pitch: h3Data,
-      h4_acao: h4Data,
+      total_participants: activeParticipants.length,
+      participants: activeParticipants,
+      h1_competencias: activeH1,
+      h2_ideias: activeH2,
+      h3_pitch: activeH3,
+      h4_acao: activeH4,
     }
     download(
       JSON.stringify(exportObj, null, 2),
@@ -105,7 +141,6 @@ export default function AdminDashboard() {
     )
   }
 
-  // Export CSV (1 linha por participante, para Excel/Sheets)
   function exportCSV() {
     const headers = [
       'nome', 'email', 'telefone', 'entidade', 'mediador_responsavel',
@@ -122,11 +157,11 @@ export default function AdminDashboard() {
       'feedback_workshop', 'rating_workshop',
     ]
 
-    const rows = participants.map(p => {
-      const h1 = h1Data.find(h => h.participant_id === p.id) || {}
-      const h3 = h3Data.find(h => h.participant_id === p.id) || {}
-      const h4 = h4Data.find(h => h.participant_id === p.id) || {}
-      const ideias = h2Data.filter(i => i.participant_id === p.id)
+    const rows = activeParticipants.map(p => {
+      const h1 = activeH1.find(h => h.participant_id === p.id) || {}
+      const h3 = activeH3.find(h => h.participant_id === p.id) || {}
+      const h4 = activeH4.find(h => h.participant_id === p.id) || {}
+      const ideias = activeH2.filter(i => i.participant_id === p.id)
       const comps = Array.isArray(h1.competencias) ? h1.competencias : []
       const top3 = [...comps].sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 3)
       const respCam = Array.isArray(h4.respostas_caminho) ? h4.respostas_caminho : []
@@ -166,7 +201,7 @@ export default function AdminDashboard() {
       ]
     })
 
-    const csv = '﻿' + // BOM para Excel reconhecer UTF-8
+    const csv = '﻿' +
       [headers, ...rows]
         .map(row => row.map(cell => csvEscape(cell)).join(','))
         .join('\r\n')
@@ -174,11 +209,10 @@ export default function AdminDashboard() {
     download(csv, `agebrokers-${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8')
   }
 
-  // Export CSV (1 linha por ideia H2)
   function exportCSVIdeias() {
     const headers = ['equipa', 'autor', 'caminho', 'categoria', 'titulo', 'descricao', 'criado_em']
-    const rows = h2Data.map(i => {
-      const p = participants.find(pp => pp.id === i.participant_id)
+    const rows = activeH2.map(i => {
+      const p = activeParticipants.find(pp => pp.id === i.participant_id)
       return [
         i.equipa_numero || '',
         p?.nome_completo || '',
@@ -211,6 +245,8 @@ export default function AdminDashboard() {
     a.click()
     URL.revokeObjectURL(url)
   }
+
+  const excludedCount = participants.filter(p => p.incluir_analise === false || p.is_test).length
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -250,7 +286,7 @@ export default function AdminDashboard() {
                     className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100"
                   >
                     <div className="font-semibold text-navy text-sm flex items-center gap-2">
-                      📊 CSV — todos os participantes
+                      📊 CSV — participantes ativos
                     </div>
                     <div className="text-xs text-gray-500 mt-0.5">Excel/Sheets · 1 linha por pessoa</div>
                   </button>
@@ -292,14 +328,14 @@ export default function AdminDashboard() {
           <>
             {/* KPIs */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <KPI icon={Users} label="Participantes" value={participants.length} color="blue" />
+              <KPI icon={Users} label="Na análise" value={activeParticipants.length} color="blue" />
               <KPI
                 icon={CheckCircle2}
                 label="Concluíram tudo"
-                value={participants.filter(p => p.h1_completo && p.h2_completo && p.h3_completo && p.h4_completo).length}
+                value={activeParticipants.filter(p => p.h1_completo && p.h2_completo && p.h3_completo && p.h4_completo).length}
                 color="green"
               />
-              <KPI icon={Lightbulb} label="Ideias geradas" value={h2Data.length} color="orange" />
+              <KPI icon={Lightbulb} label="Ideias geradas" value={activeH2.length} color="orange" />
               <KPI icon={Star} label="Rating médio" value={ratingMedio} color="blue" suffix="/10" />
             </div>
 
@@ -307,11 +343,11 @@ export default function AdminDashboard() {
             <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
               {[
                 { id: 'overview', label: 'Visão geral' },
-                { id: 'participants', label: `Participantes (${participants.length})` },
-                { id: 'h1', label: `H1 · Competências` },
-                { id: 'h2', label: `H2 · Ideias (${h2Data.length})` },
-                { id: 'h3', label: `H3 · Pitches` },
-                { id: 'h4', label: `H4 · Plano de ação` },
+                { id: 'participants', label: `Participantes (${activeParticipants.length}${excludedCount > 0 ? `+${excludedCount}` : ''})` },
+                { id: 'h1', label: 'H1 · Competências' },
+                { id: 'h2', label: `H2 · Ideias (${activeH2.length})` },
+                { id: 'h3', label: 'H3 · Pitches' },
+                { id: 'h4', label: 'H4 · Plano de ação' },
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -402,7 +438,14 @@ export default function AdminDashboard() {
 
             {activeTab === 'participants' && (
               <div className="card">
-                <h3 className="font-display text-lg text-navy mb-4">Lista de participantes</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-display text-lg text-navy">Lista de participantes</h3>
+                  {excludedCount > 0 && (
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <EyeOff size={12} /> {excludedCount} excluído{excludedCount > 1 ? 's' : ''} da análise
+                    </span>
+                  )}
+                </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50">
@@ -413,15 +456,19 @@ export default function AdminDashboard() {
                         <th className="text-left p-3">Caminho</th>
                         <th className="text-center p-3">Equipa</th>
                         <th className="text-center p-3">Progresso</th>
+                        <th className="text-center p-3">Análise</th>
                         <th className="text-center p-3">Briefing</th>
+                        <th className="text-center p-3">Ações</th>
                       </tr>
                     </thead>
                     <tbody>
                       {participants.map(p => {
+                        const excluded = p.incluir_analise === false || p.is_test
+                        const active = !excluded
                         const done = ['h1_completo', 'h2_completo', 'h3_completo', 'h4_completo']
                           .filter(k => p[k]).length
                         return (
-                          <tr key={p.id} className="border-t border-gray-100">
+                          <tr key={p.id} className={`border-t border-gray-100 transition-opacity ${excluded ? 'opacity-40' : ''}`}>
                             <td className="p-3 font-semibold">{p.nome_completo}</td>
                             <td className="p-3 text-gray-600">{p.entidade_nome || '—'}</td>
                             <td className="p-3 text-gray-600">{p.relacao_parentesco || '—'}</td>
@@ -446,6 +493,21 @@ export default function AdminDashboard() {
                               </div>
                             </td>
                             <td className="p-3 text-center">
+                              <button
+                                onClick={() => !p.is_test && toggleIncluir(p.id, active)}
+                                disabled={p.is_test}
+                                title={p.is_test ? 'Conta de teste — sempre excluída' : active ? 'Excluir da análise' : 'Incluir na análise'}
+                                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                                  p.is_test ? 'bg-gray-200 cursor-not-allowed' :
+                                  active ? 'bg-alfa-blue cursor-pointer' : 'bg-gray-300 cursor-pointer'
+                                }`}
+                              >
+                                <span className={`inline-block h-3 w-3 rounded-full bg-white shadow transition-transform ${
+                                  active ? 'translate-x-5' : 'translate-x-1'
+                                }`} />
+                              </button>
+                            </td>
+                            <td className="p-3 text-center">
                               <a
                                 href={`/admin/briefing/${p.id}`}
                                 target="_blank"
@@ -455,11 +517,29 @@ export default function AdminDashboard() {
                                 <FileText size={12} /> Abrir
                               </a>
                             </td>
+                            <td className="p-3 text-center">
+                              <div className="inline-flex gap-1">
+                                <button
+                                  onClick={() => setEditParticipant(p)}
+                                  title="Editar"
+                                  className="p-1.5 text-gray-400 hover:text-alfa-blue hover:bg-alfa-blue/5 rounded transition-colors"
+                                >
+                                  <Pencil size={14} />
+                                </button>
+                                <button
+                                  onClick={() => setDeleteConfirm(p)}
+                                  title="Eliminar"
+                                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
                           </tr>
                         )
                       })}
                       {participants.length === 0 && (
-                        <tr><td colSpan="7" className="p-8 text-center text-gray-400">Sem participantes ainda.</td></tr>
+                        <tr><td colSpan="9" className="p-8 text-center text-gray-400">Sem participantes ainda.</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -503,8 +583,8 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 )}
-                {h1Data.map(h => {
-                  const part = participants.find(p => p.id === h.participant_id)
+                {activeH1.map(h => {
+                  const part = activeParticipants.find(p => p.id === h.participant_id)
                   return (
                     <div key={h.id} className="card">
                       <h4 className="font-display text-lg text-navy mb-3">{part?.nome_completo || '—'}</h4>
@@ -529,29 +609,17 @@ export default function AdminDashboard() {
                           <p className="text-sm text-gray-700 whitespace-pre-wrap">{h.olhar_geracional}</p>
                         </div>
                       )}
-                      {h.experiencia_cliente && (
-                        <div className="mb-3">
-                          <div className="text-xs font-semibold text-gray-500 uppercase mb-1">Experiência do cliente</div>
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{h.experiencia_cliente}</p>
-                        </div>
-                      )}
-                      {h.sucessao_emocional && (
-                        <div>
-                          <div className="text-xs font-semibold text-gray-500 uppercase mb-1">Entusiasmo & medos da sucessão</div>
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{h.sucessao_emocional}</p>
-                        </div>
-                      )}
                     </div>
                   )
                 })}
-                {h1Data.length === 0 && <EmptyState text="Sem submissões em H1 ainda." />}
+                {activeH1.length === 0 && <EmptyState text="Sem submissões em H1 ainda." />}
               </div>
             )}
 
             {activeTab === 'h2' && (
               <div className="space-y-6">
                 {[1, 2, 3, 4].map(eqNum => {
-                  const ideias = h2Data.filter(i => i.equipa_numero === eqNum)
+                  const ideias = activeH2.filter(i => i.equipa_numero === eqNum)
                   if (ideias.length === 0) return null
                   return (
                     <div key={eqNum} className="card">
@@ -559,7 +627,7 @@ export default function AdminDashboard() {
                       <div className="accent-bar mb-4" />
                       <div className="space-y-3">
                         {ideias.map(i => {
-                          const part = participants.find(p => p.id === i.participant_id)
+                          const part = activeParticipants.find(p => p.id === i.participant_id)
                           return (
                             <div key={i.id} className="bg-gray-50 p-4 rounded-lg border-l-4 border-alfa-orange">
                               <div className="flex items-start justify-between mb-1">
@@ -579,14 +647,14 @@ export default function AdminDashboard() {
                     </div>
                   )
                 })}
-                {h2Data.length === 0 && <EmptyState text="Sem ideias submetidas ainda." />}
+                {activeH2.length === 0 && <EmptyState text="Sem ideias submetidas ainda." />}
               </div>
             )}
 
             {activeTab === 'h3' && (
               <div className="space-y-4">
-                {h3Data.map(h => {
-                  const part = participants.find(p => p.id === h.participant_id)
+                {activeH3.map(h => {
+                  const part = activeParticipants.find(p => p.id === h.participant_id)
                   return (
                     <div key={h.id} className="card">
                       <h4 className="font-display text-lg text-navy mb-3">{part?.nome_completo || '—'}</h4>
@@ -599,14 +667,14 @@ export default function AdminDashboard() {
                     </div>
                   )
                 })}
-                {h3Data.length === 0 && <EmptyState text="Sem pitches submetidos ainda." />}
+                {activeH3.length === 0 && <EmptyState text="Sem pitches submetidos ainda." />}
               </div>
             )}
 
             {activeTab === 'h4' && (
               <div className="space-y-4">
-                {h4Data.map(h => {
-                  const part = participants.find(p => p.id === h.participant_id)
+                {activeH4.map(h => {
+                  const part = activeParticipants.find(p => p.id === h.participant_id)
                   const respostasCaminho = Array.isArray(h.respostas_caminho) ? h.respostas_caminho : []
                   return (
                     <div key={h.id} className="card">
@@ -653,12 +721,131 @@ export default function AdminDashboard() {
                     </div>
                   )
                 })}
-                {h4Data.length === 0 && <EmptyState text="Sem planos de ação submetidos ainda." />}
+                {activeH4.length === 0 && <EmptyState text="Sem planos de ação submetidos ainda." />}
               </div>
             )}
           </>
         )}
       </main>
+
+      {editParticipant && (
+        <EditModal
+          participant={editParticipant}
+          onSave={saveEdit}
+          onClose={() => setEditParticipant(null)}
+          saving={saving}
+        />
+      )}
+      {deleteConfirm && (
+        <DeleteModal
+          participant={deleteConfirm}
+          onConfirm={deleteParticipant}
+          onClose={() => setDeleteConfirm(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+function EditModal({ participant, onSave, onClose, saving }) {
+  const [form, setForm] = useState({
+    nome_completo: participant.nome_completo || '',
+    email: participant.email || '',
+    telefone: participant.telefone || '',
+    entidade_nome: participant.entidade_nome || '',
+    mediador_responsavel: participant.mediador_responsavel || '',
+    relacao_parentesco: participant.relacao_parentesco || '',
+    caminho: participant.caminho || '',
+    equipa_numero: participant.equipa_numero || '',
+  })
+
+  function set(key, val) { setForm(f => ({ ...f, [key]: val })) }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <h2 className="font-display text-xl text-navy">Editar participante</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+        </div>
+        <div className="p-5 space-y-4">
+          {[
+            { key: 'nome_completo', label: 'Nome completo' },
+            { key: 'email', label: 'Email' },
+            { key: 'telefone', label: 'Telefone' },
+            { key: 'entidade_nome', label: 'Entidade / Agência' },
+            { key: 'mediador_responsavel', label: 'Mediador responsável' },
+            { key: 'relacao_parentesco', label: 'Relação de parentesco' },
+          ].map(({ key, label }) => (
+            <div key={key}>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{label}</label>
+              <input
+                type="text"
+                value={form[key]}
+                onChange={e => set(key, e.target.value)}
+                className="input-field text-sm"
+              />
+            </div>
+          ))}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Caminho</label>
+              <select value={form.caminho} onChange={e => set('caminho', e.target.value)} className="input-field text-sm">
+                <option value="">— nenhum —</option>
+                <option value="sucessor">Sucessor</option>
+                <option value="apoiante">Apoiante</option>
+                <option value="independente">Independente</option>
+                <option value="explorando">A explorar</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Equipa</label>
+              <select value={form.equipa_numero} onChange={e => set('equipa_numero', e.target.value ? Number(e.target.value) : '')} className="input-field text-sm">
+                <option value="">— nenhuma —</option>
+                {[1,2,3,4].map(n => <option key={n} value={n}>Equipa {n}</option>)}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-3 p-5 border-t border-gray-100">
+          <button onClick={onClose} className="btn-secondary flex-1 text-sm">Cancelar</button>
+          <button
+            onClick={() => onSave(participant.id, form)}
+            disabled={saving}
+            className="btn-primary flex-1 text-sm"
+          >
+            {saving ? 'A guardar...' : 'Guardar alterações'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DeleteModal({ participant, onConfirm, onClose }) {
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+        <div className="p-6 text-center">
+          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="text-red-600" size={24} />
+          </div>
+          <h2 className="font-display text-xl text-navy mb-2">Eliminar participante?</h2>
+          <p className="text-gray-600 text-sm mb-1">
+            Vais eliminar <strong>{participant.nome_completo}</strong> e todos os dados associados.
+          </p>
+          <p className="text-xs text-gray-400 mb-6">Esta ação é irreversível.</p>
+          <div className="flex gap-3">
+            <button onClick={onClose} className="btn-secondary flex-1">Cancelar</button>
+            <button
+              onClick={() => onConfirm(participant.id)}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+            >
+              Eliminar
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
