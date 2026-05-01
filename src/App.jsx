@@ -10,6 +10,7 @@ import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
 import Apresentacao from './pages/Apresentacao'
 import Briefing from './pages/Briefing'
+import Relatorio from './pages/Relatorio'
 
 function ProtectedRoute({ children }) {
   const { participantId, loading } = useParticipant()
@@ -54,6 +55,7 @@ export default function App() {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/apresentacao" element={<Apresentacao />} />
         <Route path="/admin/briefing/:participantId" element={<Briefing />} />
+        <Route path="/admin/relatorio" element={<Relatorio />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

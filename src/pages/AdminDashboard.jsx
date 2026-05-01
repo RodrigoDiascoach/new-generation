@@ -284,6 +284,13 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => navigate('/admin/relatorio')}
+              className="bg-navy text-white font-semibold py-2 px-3 text-sm rounded-lg hover:bg-navy/80 flex items-center gap-2"
+            >
+              <FileText size={16} />
+              <span className="hidden sm:inline">Relatório</span>
+            </button>
+            <button
               onClick={() => navigate('/admin/apresentacao')}
               className="bg-alfa-blue text-white font-semibold py-2 px-3 text-sm rounded-lg hover:bg-blue-700 flex items-center gap-2"
             >
